@@ -2,7 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connectDb } from "./db.js";
+
 import entriesRoutes from "./routes/entries.routes.js";
+import userControllers from "./controllers/userControllers.js"
 
 dotenv.config();
 
@@ -23,3 +25,4 @@ await connectDb()
     console.log("Error connecting to MongoDB ", err);
 });
 
+app.use("/users", userControllers);
