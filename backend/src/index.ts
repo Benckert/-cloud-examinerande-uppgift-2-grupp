@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { connectDb } from "./db.js";
 
 import entriesRoutes from "./routes/entries.routes.js";
-import userControllers from "./controllers/userControllers.js"
+import userControllers from "./routes/users.routes.js"
 
 dotenv.config();
 

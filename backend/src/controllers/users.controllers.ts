@@ -5,15 +5,6 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import { UserModel }from "../models/user.models.js"
 import type { Types } from "mongoose";
 
-const router = express.Router();
-
-router.post("/register", createUser); /* Kryptering och validering */
-router.post("/login", userLogin);
-router.get("/", getAllUsers);
-router.get("/:id", getUserById);
-router.put("/:id", updateUserById);
-router.delete("/:id", deleteUserById);
-
 
 const capitalize = <T extends string>(s: T) => {
   if (s.length === 0) return s;
@@ -34,7 +25,7 @@ const createJWT = (user: UserInput): string => {
 };
 
 // CREATE USER - registrera konto, spara i DB
-async function createUser(req: Request, res: Response) {
+export async function createUser(req: Request, res: Response) {
     try {
       // Formattera namn och email
       req.body.name = capitalize(req.body.name); 
@@ -56,7 +47,7 @@ async function createUser(req: Request, res: Response) {
 
 
 // GET USER - LOGIN
-async function userLogin(req: Request, res: Response) {
+export async function userLogin(req: Request, res: Response) {
   try {
 
     // Hitta att user finns via email
@@ -85,7 +76,7 @@ async function userLogin(req: Request, res: Response) {
 };
 
 // GET ALL USERS - TODO: lägg til JWT för auth?
-async function getAllUsers(req: Request, res: Response) {
+export async function getAllUsers(req: Request, res: Response) {
     try {
         const users = await UserModel.find();
 
@@ -100,7 +91,7 @@ async function getAllUsers(req: Request, res: Response) {
 };
 
 // GET USER BY ID
-async function getUserById(req: Request, res: Response) {
+export async function getUserById(req: Request, res: Response) {
     try {
         const user = await UserModel.findById(req.params.id)
         
@@ -115,7 +106,7 @@ async function getUserById(req: Request, res: Response) {
 };
 
 // UPDATE USER
-async function updateUserById(req: Request, res: Response) {
+export async function updateUserById(req: Request, res: Response) {
   try {
     // Om nytt namn anges, formattera
     if (req.body.name) {
@@ -150,7 +141,7 @@ async function updateUserById(req: Request, res: Response) {
 };
 
 //DELETE USER BY ID
-async function deleteUserById(req: Request, res: Response) {
+export async function deleteUserById(req: Request, res: Response) {
   try {
     const user = await UserModel.findByIdAndDelete(req.params.id);
 
@@ -163,5 +154,3 @@ async function deleteUserById(req: Request, res: Response) {
     res.status(500).json({ message: `Internal server error. Failed to delete user. ${error}` });
   };
 };
-
-export default router;
