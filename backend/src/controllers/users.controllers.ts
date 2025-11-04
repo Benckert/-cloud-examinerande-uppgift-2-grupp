@@ -1,6 +1,6 @@
 import express from "express";
 import type { Request, Response } from "express";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import { UserModel }from "../models/user.models.js"
 import type { Types } from "mongoose";

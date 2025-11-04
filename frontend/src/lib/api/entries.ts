@@ -1,0 +1,55 @@
+import { Entry } from "@/types/database.types";
+import { API_BASE_URL } from "./api_url";
+
+export const entriesApi = {
+  async getAll(): Promise<Entry[]> {
+    const response = await fetch (`${API_BASE_URL}/entries`);
+    if(!response.ok) {
+      throw new Error("Failed to fetch entries");
+    }
+    return response.json();
+  },
+  async getOne(id: string): Promise<Entry> {
+    const response = await fetch (`${API_BASE_URL}/entries/${id}`);
+      if(!response.ok) {
+        throw new Error("Failed to fetch the entry");
+    }
+		return response.json();
+  },
+	async create(entry: { title: string; content: string; tags?: string }): Promise<Entry> {
+		const response = await fetch(`${API_BASE_URL}/entries`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(entry),
+		});
+		if(!response.ok) {
+			throw new Error("Failed to create the entry");
+		}
+		return response.json();
+	},
+	async update(id: string, entry: { title: string; content: string; tags?: string}): Promise<Entry> {
+		const response = await fetch(`${API_BASE_URL}/entries/${id}`, {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(entry),
+		});
+		if(!response.ok) {
+			throw new Error("Failed to update the entry");
+		}
+		return response.json();
+	},
+	async delete(id: string): Promise<Entry> {
+		const response= await fetch(`${API_BASE_URL}/entries/${id}`, {
+			method: "DELETE",
+		});
+		if(!response.ok) {
+			throw new Error("Failed to delete the entry");
+		}
+		return response.json();
+	}
+
+}
