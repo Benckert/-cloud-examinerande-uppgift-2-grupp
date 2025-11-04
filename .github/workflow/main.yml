@@ -1,0 +1,27 @@
+name: Dagboken
+
+on: 
+  push:
+    branches: [ main ]
+  pull_request: 
+    branches: [ main ]
+
+jobs: 
+  lint and test:
+    runs on: [ubuntu-latest]
+    strategy: 
+      matrix: 
+        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+
+  steps: 
+  - uses: actions/checkout@v4 #klonar repot till github actions runner?
+
+  - uses: actions/setup-node@v4 #installerar node
+    with: 
+      node-version: 22
+  
+  - run: npm ci #installera dependencies
+
+  - run: npm run lint #kör linter
+
+  - echo: Worflow finished #testar ifall det här gör något
