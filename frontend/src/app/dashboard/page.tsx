@@ -63,14 +63,14 @@ export default function DashboardPage() {
     <div className="min-h-screen">
       <Header />
 
-      <main className="max-w-3xl mx-12 py-12">
-        <div className="flex flex-col  mb-12">
+      <main className="px-6 py-6 flex flex-col items-center">
+        <div className="flex flex-col mb-12 w-full max-w-4xl">
           <div className="flex  justify-between">
             <h2 className="text-3xl font-serif text-dark-brown mb-2">
               Your Entries
             </h2>
             <Link href="/new-entry">
-              <button className="btn-primary">New Entry</button>
+              <button className="btn-primary cursor-pointer">New Entry</button>
             </Link>
           </div>
 
@@ -89,7 +89,7 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-8 w-full max-w-4xl">
             {entries.map((entry) => (
               <EntryCard key={entry.id} entry={entry} />
             ))}
