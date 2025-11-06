@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import EntryCard from "@/components/EntryCard";
-import { getEntries } from "@/lib/supabase/queries";
-import { getCurrentUser } from "@/lib/supabase/auth";
 import { Entry } from "@/types/database.types";
 import Link from "next/link";
+import { usersApi } from "@/lib/api/users";
+import { entriesApi } from "@/lib/api/entries";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -18,20 +18,20 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const user = await getCurrentUser();
+        const user = await usersApi.getCurrentUser();
 
         if (!user) {
           router.push("/login");
           return;
         }
 
-        const data = await getEntries();
+        const data = await entriesApi.getAll();
         setEntries(data);
       } catch (err) {
         if (err instanceof Error) {
-          setError(err.message || "Failed to load entries")
+          setError(err.message || "Failed to load entries");
         } else {
-          setError(String(err) || "Failed to load entries")
+          setError(String(err) || "Failed to load entries");
         }
       } finally {
         setLoading(false);
@@ -104,5 +104,5 @@ export default function DashboardPage() {
         )}
       </main>
     </div>
-  )
+  );
 }

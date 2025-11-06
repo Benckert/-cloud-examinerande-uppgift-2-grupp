@@ -18,7 +18,8 @@ export interface Entry {
 
 export interface User {
   _id: string;
-  name: string;
+  name?: string;
   email: string;
-  passwordHash: string;
+  password: string;
+  token?: string;
 }
