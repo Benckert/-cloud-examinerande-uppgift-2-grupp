@@ -27,8 +27,12 @@ export default function DashboardPage() {
 
         const data = await getEntries();
         setEntries(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to load entries");
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message || "Failed to load entries")
+        } else {
+          setError(String(err) || "Failed to load entries")
+        }
       } finally {
         setLoading(false);
       }
@@ -82,7 +86,7 @@ export default function DashboardPage() {
         {entries.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-warm-gray mb-6">
-              You haven't written any entries yet.
+              You haven&apos;t written any entries yet.
             </p>
             <Link href="/new-entry">
               <button className="btn-secondary">Write your first entry</button>
@@ -91,11 +95,14 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-8 w-full max-w-4xl">
             {entries.map((entry) => (
-              <EntryCard key={entry.id} entry={entry} />
+              <EntryCard
+                key={entry.id}
+                entry={entry}
+              />
             ))}
           </div>
         )}
       </main>
     </div>
-  );
+  )
 }
