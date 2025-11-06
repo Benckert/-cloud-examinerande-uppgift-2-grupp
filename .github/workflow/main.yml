@@ -7,11 +7,12 @@ on:
     branches: [ main ]
 
 jobs: 
-  lint and test:
-    runs on: [ubuntu-latest]
+  lint_and_test:
     strategy: 
       matrix: 
         os: [ ubuntu-latest, windows-latest, macOS-latest ]
+
+    runs-on: ${{ matrix.os }}
 
   steps: 
   - uses: actions/checkout@v4 #klonar repot till github actions runner?
@@ -19,9 +20,12 @@ jobs:
   - uses: actions/setup-node@v4 #installerar node
     with: 
       node-version: 22
+    chache: 'npm'
   
-  - run: npm ci #installera dependencies
+  - run: npm ci #installera dependencies - clean install
 
   - run: npm run lint #kör linter
 
-  - echo: Worflow finished #testar ifall det här gör något
+  - run: npm test
+
+  - run: echo "worflow finished" #testar ifall det här gör något
