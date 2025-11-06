@@ -1,12 +1,19 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { connectDb } from "./db.js";
+import path from "path"
+import { fileURLToPath } from "url"
+import { connectDb } from "./db.js"
 
-import entriesRoutes from "./routes/entries.routes.js";
-import userControllers from "./routes/users.routes.js";
+import entriesRoutes from "./routes/entries.routes.js"
+import userControllers from "./routes/users.routes.js"
 
-dotenv.config();
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Load .env from project root (two levels up from dist/index.js)
+dotenv.config({ path: path.resolve(__dirname, "../../.env") })
 
 const app = express();
 
