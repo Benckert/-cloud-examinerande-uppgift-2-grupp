@@ -19,6 +19,10 @@ interface UserInput {
   _id: Types.ObjectId;
 }
 
+export interface AuthRequest extends Request {
+  user?: any;
+}
+
 const createJWT = (user: { _id: Types.ObjectId; email: string }): string => {
   return jwt.sign(
     { id: user._id.toString() },
@@ -203,6 +207,23 @@ export async function deleteUserById(req: Request, res: Response) {
   } catch (error) {
     res.status(500).json({
       message: `Internal server error. Failed to delete user. ${error}`,
+    });
+  }
+}
+
+// GET CURRENT USER
+export async function getCurrentUser(req: AuthRequest, res: Response) {
+  try {
+    const userId = (req as any).userId;
+    if (!userId) throw new Error("User ID not found in request");
+
+    const user = await UserModel.findById(userId).select("-passwordHash");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: `Internal server error. Failed to fetch user. ${error}`,
     });
   }
 }

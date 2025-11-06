@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import EntryCard from "@/components/EntryCard";
-import { getEntries } from "@/lib/supabase/queries";
-import { getCurrentUser } from "@/lib/supabase/auth";
+// import { getEntries } from "@/lib/supabase/queries";
+// import { getCurrentUser } from "@/lib/supabase/auth";
 import { Entry } from "@/types/database.types";
 import Link from "next/link";
 
