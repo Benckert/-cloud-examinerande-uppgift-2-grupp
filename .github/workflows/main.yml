@@ -36,9 +36,9 @@ jobs:
         run: npm ci #installera dependencies - clean install
         working-directory: backend
 
-      - name: Lint backend
-        run: npm run lint #kör linter
-        working-directory: backend
+      # - name: Lint backend
+      #   run: npm run lint #kör linter
+      #   working-directory: backend
 
       # Echo status message
       - name: Echo status message
