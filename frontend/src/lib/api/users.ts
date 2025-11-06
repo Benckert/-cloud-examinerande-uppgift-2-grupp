@@ -30,6 +30,9 @@ export const usersApi = {
     if (!response.ok) {
       throw new Error("Failed to login user");
     }
-    return response.json();
+
+    const data = await response.json();
+    localStorage.setItem("token", data.token);
+    return data.data;
   },
 };

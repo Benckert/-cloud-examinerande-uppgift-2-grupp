@@ -29,9 +29,9 @@ export default function DashboardPage() {
         setEntries(data);
       } catch (err) {
         if (err instanceof Error) {
-          setError(err.message || "Failed to load entries")
+          setError(err.message || "Failed to load entries");
         } else {
-          setError(String(err) || "Failed to load entries")
+          setError(String(err) || "Failed to load entries");
         }
       } finally {
         setLoading(false);
@@ -95,14 +95,11 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-8 w-full max-w-4xl">
             {entries.map((entry) => (
-              <EntryCard
-                key={entry.id}
-                entry={entry}
-              />
+              <EntryCard key={entry.id} entry={entry} />
             ))}
           </div>
         )}
       </main>
     </div>
-  )
+  );
 }
