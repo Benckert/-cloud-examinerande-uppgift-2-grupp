@@ -22,8 +22,24 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm ci #installera dependencies - clean install
+      # Frontend
+      - name: Install frontend dependencies
+        run: npm ci #installera dependencies - clean install
+        working-directory: frontend
 
-      - run: npm run lint #kör linter
+      - name: Lint frontend
+        run: npm run lint #kör linter
+        working-directory: frontend
 
-      - run: echo "Workflow finished" #testar ifall det här gör något
+      # Backend
+      - name: Install backend dependencies
+        run: npm ci #installera dependencies - clean install
+        working-directory: backend
+
+      - name: Lint backend
+        run: npm run lint #kör linter
+        working-directory: backend
+
+      # Echo status message
+      - name: Echo status message
+        run: echo "Workflow finished" #testar ifall det här gör något
