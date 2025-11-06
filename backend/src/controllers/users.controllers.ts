@@ -27,26 +27,46 @@ const createJWT = (user: UserInput): string => {
 
 // CREATE USER - registrera konto, spara i DB
 export async function createUser(req: Request, res: Response) {
+  const { email, password, name } = req.body;
   try {
-    // Formattera namn och email
-    req.body.name = capitalize(req.body.name);
-    req.body.email = req.body.email.toLowerCase(); // För att inte ha dubletter av emails genom case insensitivity
+    //Validering enkel
+    if (!email || !password || !name) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-    /* TODO: lägg till validering? */
+    // Formattera namn och email
+    const formattedEmail = email.toLowerCase();
+    const formattedName = capitalize(name);
+
+    // Kolla om användaren redan finns
+    const existingUser = await UserModel.findOne({ email: formattedEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
 
     // Kryptera lösenord
-    req.body.passwordHash = await bcrypt.hash(req.body.passwordHash, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // Skapa användare
-    const user = await UserModel.create(req.body);
+    const newUser = await UserModel.create({
+      email: formattedEmail,
+      name: formattedName,
+      passwordHash,
+    });
 
-    res.status(201).json({ message: "User created", data: user });
+    // Returnera användaren utan passwordHash
+    res.status(201).json({
+      message: "User created successfully",
+      data: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+      },
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: `Internal server error. Failed to create user. ${error}`,
-      });
+    res.status(500).json({
+      message: `Internal server error. Failed to create user. ${error}`,
+    });
   }
 }
 
@@ -79,11 +99,9 @@ export async function userLogin(req: Request, res: Response) {
       .status(200)
       .json({ message: "Login successful", token: token, data: user });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: `Internal server error. Failed to login user. ${error}`,
-      });
+    res.status(500).json({
+      message: `Internal server error. Failed to login user. ${error}`,
+    });
   }
 }
 
@@ -100,11 +118,9 @@ export async function getAllUsers(req: Request, res: Response) {
 
     res.status(200).json({ message: "Fetched all users:", data: users });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: `Internal server error. Failed to fetch all users. ${error}`,
-      });
+    res.status(500).json({
+      message: `Internal server error. Failed to fetch all users. ${error}`,
+    });
   }
 }
 
@@ -119,11 +135,9 @@ export async function getUserById(req: Request, res: Response) {
 
     res.status(200).json({ message: "Fetched user:", data: user });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: `Internal server error. Failed to fetch user. ${error}`,
-      });
+    res.status(500).json({
+      message: `Internal server error. Failed to fetch user. ${error}`,
+    });
   }
 }
 
@@ -158,11 +172,9 @@ export async function updateUserById(req: Request, res: Response) {
 
     res.status(201).json({ message: "User updated", data: user });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: `Internal server error. Failed to update user. ${error}`,
-      });
+    res.status(500).json({
+      message: `Internal server error. Failed to update user. ${error}`,
+    });
   }
 }
 
@@ -179,10 +191,8 @@ export async function deleteUserById(req: Request, res: Response) {
       .status(200)
       .json({ message: "Successfully deleted user: ", data: user });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: `Internal server error. Failed to delete user. ${error}`,
-      });
+    res.status(500).json({
+      message: `Internal server error. Failed to delete user. ${error}`,
+    });
   }
 }

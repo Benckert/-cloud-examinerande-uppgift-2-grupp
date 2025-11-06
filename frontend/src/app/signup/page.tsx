@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUp } from "@/lib/supabase/auth";
+import { usersApi } from "@/lib/api/users";
 
 export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -30,13 +31,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await signUp({ email, password });
+      await usersApi.register({ name, email, password });
       router.push("/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || "An error occurred during signup")
+        setError(err.message || "An error occurred during signup");
       } else {
-        setError(String(err) || "An error occurred during signup")
+        setError(String(err) || "An error occurred during signup");
       }
     } finally {
       setLoading(false);
@@ -53,6 +54,23 @@ export default function SignupPage() {
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm mb-2 text-dark-brown"
+              >
+                Name
+              </label>
+              <input
+                id="name"
+                type="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="input-field"
+                required
+                disabled={loading}
+              />
+            </div>
             <div>
               <label
                 htmlFor="email"
