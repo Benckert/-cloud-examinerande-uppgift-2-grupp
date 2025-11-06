@@ -34,8 +34,11 @@ export default function SignupPage() {
       await usersApi.register({ name, email, password });
       router.push("/dashboard");
     } catch (err: unknown) {
-      if (err instanceof Error)
+      if (err instanceof Error) {
         setError(err.message || "An error occurred during signup");
+      } else {
+        setError(String(err) || "An error occurred during signup");
+      }
     } finally {
       setLoading(false);
     }
