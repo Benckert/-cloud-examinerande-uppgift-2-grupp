@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signIn } from "@/lib/supabase/auth";
+import { usersApi } from "@/lib/api/users";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await signIn({ email, password });
+      await usersApi.signIn({ email, password });
       router.push("/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -40,10 +40,7 @@ export default function LoginPage() {
         </div>
 
         <div className="card">
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
                 htmlFor="email"
@@ -98,10 +95,7 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-warm-gray">
               Don&apos;t have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-dark-brown hover:underline"
-              >
+              <Link href="/signup" className="text-dark-brown hover:underline">
                 Sign up
               </Link>
             </p>
@@ -109,5 +103,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
