@@ -1,0 +1,48 @@
+# ========================================
+# Environment Variables (contain secrets)
+# ========================================
+# Root .env file (single source of truth for Docker & local dev)
+.env
+.env.local
+.env*.local
+
+# ========================================
+# Docker
+# ========================================
+# Override files for local customization
+docker-compose.override.yml
+
+# Note: docker-compose.yml should be committed
+# It contains the base configuration needed by the team
+
+# ========================================
+# Node.js
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ========================================
+# Build outputs
+# ========================================
+backend/dist/
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# ========================================
+# IDE / Editor
+# ========================================
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# ========================================
+# Logs
+# ========================================
+*.log
+logs/
