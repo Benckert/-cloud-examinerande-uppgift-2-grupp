@@ -5,13 +5,13 @@ interface EntryCardProps {
 }
 
 export default function EntryCard({ entry }: EntryCardProps) {
-  const formattedDate = new Date(entry.created_at).toLocaleDateString("en-US", {
+  const formattedDate = new Date(entry.createdAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+  })
 
   return (
     <div className="card">

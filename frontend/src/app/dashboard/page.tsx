@@ -95,7 +95,10 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-8 w-full max-w-4xl">
             {entries.map((entry) => (
-              <EntryCard key={entry._id} entry={entry} />
+              <EntryCard
+                key={entry._id}
+                entry={entry}
+              />
             ))}
           </div>
         )}
