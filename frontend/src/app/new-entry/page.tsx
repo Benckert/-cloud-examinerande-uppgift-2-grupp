@@ -36,11 +36,16 @@ export default function NewEntryPage() {
     setLoading(true);
 
     try {
-      await createEntry({ title, content });
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Failed to create entry");
-      setLoading(false);
+      await createEntry({ title, content })
+      router.push("/dashboard")
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || "Failed to create entry")
+      } else {
+        setError(String(err) || "Failed to create entry")
+      }
+    } finally {
+      setLoading(false)
     }
   };
 

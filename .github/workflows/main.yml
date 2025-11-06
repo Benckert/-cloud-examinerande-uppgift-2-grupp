@@ -1,0 +1,45 @@
+name: Dagboken
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+
+    steps:
+      - uses: actions/checkout@v4 #klonar repot till github actions runner?
+
+      - uses: actions/setup-node@v4 #installerar node
+        with:
+          node-version: 22
+
+      # Frontend
+      - name: Install frontend dependencies
+        run: npm ci #installera dependencies - clean install
+        working-directory: frontend
+
+      - name: Lint frontend
+        run: npm run lint #kör linter
+        working-directory: frontend
+
+      # Backend
+      - name: Install backend dependencies
+        run: npm ci #installera dependencies - clean install
+        working-directory: backend
+
+      # - name: Lint backend
+      #   run: npm run lint #kör linter
+      #   working-directory: backend
+
+      # Echo status message
+      - name: Echo status message
+        run: echo "Workflow finished" #testar ifall det här gör något
