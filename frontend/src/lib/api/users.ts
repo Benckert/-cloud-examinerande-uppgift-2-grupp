@@ -35,4 +35,16 @@ export const usersApi = {
     localStorage.setItem("token", data.token);
     return data.data;
   },
+  async getCurrentUser() {
+    const token = localStorage.getItem("token");
+    if (!token) return null;
+
+    const response = await fetch(`${API_BASE_URL}/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!response.ok) return null;
+    return response.json();
+  },
 };
