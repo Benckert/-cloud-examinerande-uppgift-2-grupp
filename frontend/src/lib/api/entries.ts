@@ -7,7 +7,7 @@ export const entriesApi = {
     const response = await fetch(`${API_BASE_URL}/entries`, {
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -30,10 +30,12 @@ export const entriesApi = {
     content: string;
     tags?: string;
   }): Promise<Entry> {
+    const token = localStorage.getItem("token");
+
     const response = await fetch(`${API_BASE_URL}/entries`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(entry),
     });
@@ -46,10 +48,12 @@ export const entriesApi = {
     id: string,
     entry: { title: string; content: string; tags?: string }
   ): Promise<Entry> {
+    const token = localStorage.getItem("token");
+
     const response = await fetch(`${API_BASE_URL}/entries/${id}`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json", Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(entry),
     });
@@ -59,8 +63,13 @@ export const entriesApi = {
     return response.json();
   },
   async delete(id: string): Promise<Entry> {
+    const token = localStorage.getItem("token");
+
     const response = await fetch(`${API_BASE_URL}/entries/${id}`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json", Authorization: `Bearer ${token}`
+      },
     });
     if (!response.ok) {
       throw new Error("Failed to delete the entry");

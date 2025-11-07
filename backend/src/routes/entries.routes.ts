@@ -9,10 +9,10 @@ import {
 import { auth } from "../middleware/auth.middleware.js";
 const router = Router();
 
-router.get("/", auth, getEntries /* , authenticateUser */);
-router.get("/:id", getEntry /* , authenticateUser */);
-router.post("/", createEntry /* , authenticateUser */);
-router.put("/:id", updateEntry /* , authenticateUser */);
-router.delete("/:id", deleteEntry /* , authenticateUser */);
+router.get("/", auth, getEntries );
+router.get("/:id", auth, getEntry );
+router.post("/", auth, createEntry );
+router.put("/:id", auth, updateEntry );
+router.delete("/:id", auth, deleteEntry );
 
 export default router;
