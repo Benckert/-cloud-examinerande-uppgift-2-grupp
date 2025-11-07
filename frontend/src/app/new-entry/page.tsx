@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-import { createEntry } from "@/lib/supabase/queries";
-import { getCurrentUser } from "@/lib/supabase/auth";
+// import { createEntry } from "@/lib/supabase/queries";
+// import { getCurrentUser } from "@/lib/supabase/auth";
+import { entriesApi } from "@/lib/api/entries";
+import { usersApi } from "@/lib/api/users";
 
 export default function NewEntryPage() {
   const router = useRouter();
@@ -15,7 +17,7 @@ export default function NewEntryPage() {
 
   useEffect(() => {
     async function checkAuth() {
-      const user = await getCurrentUser();
+      const user = await usersApi.getCurrentUser();
       if (!user) {
         router.push("/login");
       }
@@ -28,6 +30,7 @@ export default function NewEntryPage() {
     e.preventDefault();
     setError(null);
 
+    /* validering och saker som trim bör också flyttas till backend */
     if (!title.trim() || !content.trim()) {
       setError("Title and content are required");
       return;
@@ -36,7 +39,7 @@ export default function NewEntryPage() {
     setLoading(true);
 
     try {
-      await createEntry({ title, content })
+      await entriesApi.create({ title, content })
       router.push("/dashboard")
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -49,6 +52,7 @@ export default function NewEntryPage() {
     }
   };
 
+  /* Datum formattering och insättning bör flyttas till backend */
   const displayDate = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",

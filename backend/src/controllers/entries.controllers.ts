@@ -43,17 +43,16 @@ export const getEntry = async (req: Request, res: Response) => {
 
 export const createEntry = async (req: Request, res: Response) => {
   try {
-    const { title, content, tags, createdBy } = req.body;
+    const { title, content} = req.body;
     // TODO När vi har auth på plats
-    // const createdBy = req.user?.userId;
+      const userId = (req as any).userId;
+    if (!userId) throw new Error("User not authenticated");
 
     // if(!createdBy) return res.status(401).json({ error: "User not authenticated" });
 
     const newEntry = new JournalModel({
       title,
-      content,
-      tags,
-      createdBy /* createdBy */,
+      content, createdBy: userId
     });
 
     await newEntry.save();
