@@ -10,16 +10,16 @@ import { usersApi } from "@/lib/api/users";
 import { entriesApi } from "@/lib/api/entries";
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const [entries, setEntries] = useState<Entry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<{ name: string } | null>(null)
+  const router = useRouter();
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<{ name: string } | null>(null);
 
   // Search-related state
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   /*
    * Load initial data on component mount
@@ -28,53 +28,53 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const currentUser = await usersApi.getCurrentUser()
+        const currentUser = await usersApi.getCurrentUser();
 
         if (!currentUser) {
-          router.push("/login")
-          return
+          router.push("/login");
+          return;
         }
 
-        setUser(currentUser)
+        setUser(currentUser);
 
-        const data = await entriesApi.getAll()
-        setEntries(data)
+        const data = await entriesApi.getAll();
+        setEntries(data);
       } catch (err) {
         if (err instanceof Error) {
-          setError(err.message || "Failed to load entries")
+          setError(err.message || "Failed to load entries");
         } else {
-          setError(String(err) || "Failed to load entries")
+          setError(String(err) || "Failed to load entries");
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadData()
-  }, [router])
+    loadData();
+  }, [router]);
 
   useEffect(() => {
     // Clear any previous search errors
-    setSearchError(null)
+    setSearchError(null);
 
     // If search query is empty, reload all entries
     if (searchQuery.trim() === "") {
       // Don't search if we're still loading initial data
       if (!loading) {
-        handleReloadEntries()
+        handleReloadEntries();
       }
-      return
+      return;
     }
 
     // Set a timer to execute search after 300ms of no typing
     const debounceTimer = setTimeout(() => {
-      handleSearch(searchQuery)
-    }, 300)
+      handleSearch(searchQuery);
+    }, 300);
 
     // Cleanup function: cancel the timer if searchQuery changes
     // This ensures we only search after user stops typing
-    return () => clearTimeout(debounceTimer)
-  }, [searchQuery, loading])
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, loading]);
 
   /*
    * Reload all entries (clear search)
@@ -82,17 +82,17 @@ export default function DashboardPage() {
    */
   const handleReloadEntries = async () => {
     try {
-      setIsSearching(true)
-      const data = await entriesApi.getAll()
-      setEntries(data)
-      setSearchError(null)
+      setIsSearching(true);
+      const data = await entriesApi.getAll();
+      setEntries(data);
+      setSearchError(null);
     } catch (err) {
-      setSearchError("Failed to load entries")
-      console.error("Failed to reload entries:", err)
+      setSearchError("Failed to load entries");
+      console.error("Failed to reload entries:", err);
     } finally {
-      setIsSearching(false)
+      setIsSearching(false);
     }
-  }
+  };
 
   /*
    * Execute search for journal entries
@@ -101,30 +101,30 @@ export default function DashboardPage() {
   const handleSearch = async (query: string) => {
     // Don't search if query is empty (whitespace only)
     if (!query.trim()) {
-      return
+      return;
     }
 
-    setIsSearching(true)
-    setSearchError(null)
+    setIsSearching(true);
+    setSearchError(null);
 
     try {
-      const results = await entriesApi.search(query)
-      setEntries(results)
+      const results = await entriesApi.search(query);
+      setEntries(results);
     } catch (err) {
-      setSearchError("Search failed. Please try again.")
-      console.error("Search failed:", err)
+      setSearchError("Search failed. Please try again.");
+      console.error("Search failed:", err);
     } finally {
-      setIsSearching(false)
+      setIsSearching(false);
     }
-  }
+  };
 
   /*
    * Handle entry deletion
    * Removes the deleted entry from the local state
    */
   const handleDelete = (deletedId: string) => {
-    setEntries(entries.filter((entry) => entry._id !== deletedId))
-  }
+    setEntries(entries.filter((entry) => entry._id !== deletedId));
+  };
 
   // Loading state UI
   if (loading) {
@@ -135,7 +135,7 @@ export default function DashboardPage() {
           <p className="text-warm-gray text-center">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Error state UI
@@ -147,7 +147,7 @@ export default function DashboardPage() {
           <p className="text-red-600 text-center">{error}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -155,8 +155,8 @@ export default function DashboardPage() {
       <Header user={user} />
 
       <main className="px-6 py-6 flex flex-col items-center">
-        <div className="flex flex-col mb-12 w-full max-w-4xl">
-          <div className="flex justify-between mb-4">
+        <div className="flex flex-col mb-8 w-full max-w-4xl">
+          <div className="flex justify-between mb-2">
             <h2 className="text-3xl font-serif text-dark-brown mb-2">
               Your Entries
             </h2>
@@ -164,24 +164,8 @@ export default function DashboardPage() {
               <button className="btn-primary cursor-pointer">New Entry</button>
             </Link>
           </div>
-
-          {/* Search input field */}
-          <input
-            type="text"
-            placeholder="Search entries by title or content..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="input-field mb-2 w-full"
-            aria-label="Search journal entries"
-          />
-
-          {/* Search error message */}
-          {searchError && (
-            <p className="text-red-600 text-sm mb-2">{searchError}</p>
-          )}
-
           {/* Entry count and search status */}
-          <p className="text-warm-gray text-sm">
+          <p className="text-warm-gray text-sm mb-4">
             {isSearching ? (
               "Searching..."
             ) : (
@@ -191,6 +175,21 @@ export default function DashboardPage() {
               </>
             )}
           </p>
+
+          {/* Search input field */}
+          <input
+            type="text"
+            placeholder="Search entries by title or content..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="input-field w-full border border-warm-gray/20 rounded-sm shadow-sm focus:border-dark-brown"
+            aria-label="Search journal entries"
+          />
+
+          {/* Search error message */}
+          {searchError && (
+            <p className="text-red-600 text-sm mb-2">{searchError}</p>
+          )}
         </div>
 
         {/* Empty state - no entries */}
@@ -230,5 +229,5 @@ export default function DashboardPage() {
         )}
       </main>
     </div>
-  )
+  );
 }
