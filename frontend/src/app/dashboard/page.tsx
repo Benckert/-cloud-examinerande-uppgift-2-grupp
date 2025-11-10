@@ -102,15 +102,11 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-8 w-full max-w-4xl">
             {entries.map((entry) => (
-<<<<<<< HEAD
               <EntryCard
                 key={entry._id}
                 entry={entry}
                 onDelete={handleDelete}
               />
-=======
-              <EntryCard key={entry._id} entry={entry} />
->>>>>>> 4f0b82507de308e6935960cf4912dc8379aee69d
             ))}
           </div>
         )}

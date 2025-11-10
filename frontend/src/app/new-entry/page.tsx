@@ -14,6 +14,7 @@ export default function NewEntryPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [ mood, setMood ] = useState<string>("neutral");
+  const [user, setUser] = useState<{ name: string } | null>(null)
 
   useEffect(() => {
     async function checkAuth() {
@@ -21,6 +22,8 @@ export default function NewEntryPage() {
       if (!user) {
         router.push("/login");
       }
+
+      setUser(user);
     }
 
     checkAuth();
@@ -64,7 +67,7 @@ export default function NewEntryPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <Header user={user}/>
 
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
