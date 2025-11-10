@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import EntryCard from "@/components/EntryCard";
-import { moodOptions } from "@/lib/moods/moodOptions";
 
 jest.mock("@/lib/api/entries", () => ({
   entriesApi: {
