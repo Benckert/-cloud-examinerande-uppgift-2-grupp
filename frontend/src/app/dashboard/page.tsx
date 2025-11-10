@@ -44,7 +44,7 @@ export default function DashboardPage() {
     loadData();
   }, [router]);
 
-  const handleDelete = (deletedId: String) => {
+  const handleDelete = (deletedId: string) => {
     setEntries(entries.filter(entry => entry._id !== deletedId))
   }
 
