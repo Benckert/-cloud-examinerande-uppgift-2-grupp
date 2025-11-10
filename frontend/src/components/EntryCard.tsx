@@ -145,9 +145,7 @@ export default function EntryCard({ entry, onDelete, onUpdate }: EntryCardProps)
 
       <div className={isEditing ? "hidden" : "mb-4"}>
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-serif text-dark-brown">
-            {entry.title}
-          </h2>
+          <h2 className="text-2xl font-serif text-dark-brown">{entry.title}</h2>
           {entry.tags && (
             <span className="flex items-center gap-2">
               <span className="text-lg">{moodEmojis[entry.tags]}</span>
