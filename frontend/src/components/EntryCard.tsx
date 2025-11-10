@@ -33,7 +33,7 @@ export default function EntryCard({ entry, onDelete }: EntryCardProps) {
           <h2 className="text-2xl font-serif text-dark-brown">{entry.title}</h2>
           {entry.tags && (
             <span className="flex items-center gap-2">
-              <span className="text-lg">{moodEmojis[entry.tags] || "😐"}</span>
+              <span className="text-lg">{moodEmojis[entry.tags]}</span>
               <span className="capitalize">{entry.tags}</span>
             </span>
           )}

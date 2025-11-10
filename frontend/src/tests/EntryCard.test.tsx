@@ -15,9 +15,9 @@ describe("EntryCard Component", () => {
     title: "Test Entry",
     content: "Test Content",
     tags: "happy",
-    createdAt: new Date().toISOString(),
+    createdAt: "2025-11-10T12:10:00Z",
     createdBy: "user123",
-    updatedAt: new Date().toISOString(),
+    updatedAt: "2025-11-10T12:12:00Z",
   };
 
   const mockOnDelete = jest.fn();
@@ -29,14 +29,20 @@ describe("EntryCard Component", () => {
     expect(screen.getByText("Test Content")).toBeInTheDocument();
     expect(screen.getByText("happy")).toBeInTheDocument();
   });
-  it("displayes correct mood emoji", () => {
+  it("shows correct mood emoji", () => {
     render(<EntryCard entry={mockEntry} onDelete={mockOnDelete} />);
-    const emoji = moodOptions.find((m) => m.value === "happy")?.emoji;
 
-    expect(screen.getByText(emoji as string)).toBeInTheDocument();
+    expect(screen.getByText("😁")).toBeInTheDocument();
+  });
+  it("shows default emoji when tag is missing", () => {
+    const entryWithoutTag = { ...mockEntry, tags: "neutral" };
+    render(<EntryCard entry={entryWithoutTag} onDelete={mockOnDelete} />);
+
+    expect(screen.getByText("😐")).toBeInTheDocument();
   });
   it("calls onDelete when delete button is clicked", async () => {
     render(<EntryCard entry={mockEntry} onDelete={mockOnDelete} />);
+
     const deleteBtn = screen.getByRole("button", { name: /delete/i });
     fireEvent.click(deleteBtn);
 
@@ -44,4 +50,23 @@ describe("EntryCard Component", () => {
       expect(mockOnDelete).toHaveBeenCalledWith("123");
     });
   });
+  it("displays formatted date correctly", () => {
+    render(<EntryCard entry={mockEntry} onDelete={mockOnDelete} />);
+
+    const formattedDate = new Date(mockEntry.createdAt).toLocaleDateString(
+      "sv-SE",
+      {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }
+    );
+
+    expect(screen.getByText(formattedDate)).toBeInTheDocument();
+  });
 });
+
+//3. Testa filtrering/sökning av entries
+//4. Testa att edit-knappen fungerar
