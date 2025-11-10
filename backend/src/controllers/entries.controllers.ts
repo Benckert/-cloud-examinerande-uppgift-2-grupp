@@ -124,3 +124,58 @@ export const deleteEntry = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const searchEntries = async (req: Request, res: Response) => {
+  try {
+    // Extract the authenticated user ID from the request (set by auth middleware)
+    const userId = (req as any).userId
+    if (!userId) throw new Error("User ID not found in request")
+
+    // Get the search query from URL parameters
+    const { query } = req.query
+
+    // Validate that a search query was provided
+    if (!query || typeof query !== "string") {
+      return res.status(400).json({
+        error: "Search query is required",
+        message: "Please provide a 'query' parameter with your search term",
+      })
+    }
+
+    // Trim whitespace from the search query
+    const searchQuery = query.trim()
+
+    // If search query is empty after trimming, return validation error
+    if (searchQuery.length === 0) {
+      return res.status(400).json({
+        error: "Search query cannot be empty",
+        message: "Please provide a non-empty search term",
+      })
+    }
+
+    // Search for entries matching the query in title OR content
+    // $regex: performs pattern matching (case-insensitive with 'i' option)
+    // $or: matches if ANY of the conditions are true
+    // Only searches entries created by the authenticated user
+    const entries = await JournalModel.find({
+      createdBy: userId,
+      $or: [
+        { title: { $regex: searchQuery, $options: "i" } },
+        { content: { $regex: searchQuery, $options: "i" } },
+      ],
+    }).sort({ createdAt: -1 }) // Sort by newest first
+
+    // Return the matching entries
+    res.status(200).json({
+      data: entries,
+      count: entries.length,
+      query: searchQuery,
+    })
+  } catch (err) {
+    // Handle any errors that occur during the search
+    res.status(500).json({
+      error: "Failed to search journal entries",
+      details: (err as Error).message,
+    })
+  }
+}
