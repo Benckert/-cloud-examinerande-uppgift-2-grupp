@@ -1,5 +1,5 @@
 import { Entry } from "@/types/database.types";
-import { entriesApi } from "../lib/api/entries"
+import { entriesApi } from "../lib/api/entries";
 import { moodEmojis } from "@/lib/moods/moodOptions";
 import { useState } from "react";
 
@@ -25,7 +25,7 @@ export default function EntryCard({ entry, onDelete, onUpdate }: EntryCardProps)
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  })
+  });
 
   const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -36,7 +36,7 @@ export default function EntryCard({ entry, onDelete, onUpdate }: EntryCardProps)
     } catch (error) {
       console.error("Failed to delete entry:", error);
     }
-  }
+  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = event.target;
@@ -150,7 +150,7 @@ export default function EntryCard({ entry, onDelete, onUpdate }: EntryCardProps)
           </h2>
           {entry.tags && (
             <span className="flex items-center gap-2">
-              <span className="text-lg">{moodEmojis[entry.tags] || "😐"}</span>
+              <span className="text-lg">{moodEmojis[entry.tags]}</span>
               <span className="capitalize">{entry.tags}</span>
             </span>
           )}
