@@ -60,14 +60,14 @@ export async function createUser(req: Request, res: Response) {
       passwordHash,
     });
 
+    // Skapa token
+    const token = createJWT(newUser);
+
     // Returnera användaren utan passwordHash
-    res.status(201).json({
+    res.status(200).json({
       message: "User created successfully",
-      data: {
-        _id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-      },
+      token,
+      data: { _id: newUser._id, name: newUser.name, email: newUser.email },
     });
   } catch (error) {
     res.status(500).json({
