@@ -41,6 +41,10 @@ export default function DashboardPage() {
     loadData();
   }, [router]);
 
+  const handleDelete = (deletedId: String) => {
+    setEntries(entries.filter(entry => entry._id !== deletedId))
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen">
@@ -98,6 +102,7 @@ export default function DashboardPage() {
               <EntryCard
                 key={entry._id}
                 entry={entry}
+                onDelete={handleDelete}
               />
             ))}
           </div>
