@@ -81,7 +81,7 @@ export default function EntryCard({ entry, onDelete, onUpdate }: EntryCardProps)
               <p className="text-center">This action cannot be undone.</p>
               <div className="flex flex-end gap-3 justify-center mt-10">
                 <button onClick={toggleModal} className="text-[14px] bg-neutral-200 p-2 pl-3 pr-3 rounded-md cursor-pointer hover:bg-neutral-300 transition">Cancel</button>
-                <button onClick={handleDelete} className="text-[14px] bg-red-600 text-red-50 p-2 pl-3 pr-3 rounded-md cursor-pointer hover:bg-red-700 transition">Yes, I'm sure</button>
+                <button onClick={handleDelete} className="text-[14px] bg-red-600 text-red-50 p-2 pl-3 pr-3 rounded-md cursor-pointer hover:bg-red-700 transition">{`Yes, I'm sure`}</button>
               </div>
             </div>
         </>
