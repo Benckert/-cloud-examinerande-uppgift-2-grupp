@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
-// import { createEntry } from "@/lib/supabase/queries";
-// import { getCurrentUser } from "@/lib/supabase/auth";
 import { entriesApi } from "@/lib/api/entries";
 import { usersApi } from "@/lib/api/users";
+import { moodOptions } from "@/lib/moods/moodOptions";
 
 export default function NewEntryPage() {
   const router = useRouter();
@@ -14,6 +13,7 @@ export default function NewEntryPage() {
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ mood, setMood ] = useState<string>("neutral");
 
   useEffect(() => {
     async function checkAuth() {
@@ -39,7 +39,7 @@ export default function NewEntryPage() {
     setLoading(true);
 
     try {
-      await entriesApi.create({ title, content })
+      await entriesApi.create({ title, content, tags: mood })
       router.push("/dashboard")
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -99,7 +99,26 @@ export default function NewEntryPage() {
               disabled={loading}
             />
           </div>
-
+          <div>
+            <label
+              htmlFor="mood"
+              className="block text-sm mb-2 text-dark-brown font-medium">
+                How are you feeling today?
+              </label>
+              <select 
+                id="mood"
+                value={mood}
+                onChange={(e) => setMood(e.target.value)}
+                className="input-field text-xl"
+                disabled={loading}
+                >
+                  {moodOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.emoji} {option.label}
+                    </option>
+                  ))}
+                </select>
+          </div>
           <div>
             <label
               htmlFor="content"

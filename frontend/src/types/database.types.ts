@@ -9,13 +9,6 @@ export interface Entry {
   updatedAt: string;
 }
 
-// Tror ej vi behöver denna ??
-// export interface NewEntry {
-//   title: string
-//   content: string
-//   tags?: string
-// }
-
 export interface User {
   _id: string;
   name?: string;
