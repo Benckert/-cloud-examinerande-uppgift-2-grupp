@@ -14,16 +14,19 @@ export default function DashboardPage() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const user = await usersApi.getCurrentUser();
+        const currentUser = await usersApi.getCurrentUser();
 
-        if (!user) {
+        if (!currentUser) {
           router.push("/login");
           return;
         }
+
+        setUser(currentUser);
 
         const data = await entriesApi.getAll();
         setEntries(data);
@@ -48,7 +51,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <Header />
+        <Header user={user} />
         <div className="max-w-4xl mx-auto px-6 py-12">
           <p className="text-warm-gray text-center">Loading...</p>
         </div>
@@ -59,7 +62,7 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen">
-        <Header />
+        <Header user={user} />
         <div className="max-w-4xl mx-auto px-6 py-12">
           <p className="text-red-600 text-center">{error}</p>
         </div>
@@ -69,7 +72,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <Header />
+      <Header user={user} />
 
       <main className="px-6 py-6 flex flex-col items-center">
         <div className="flex flex-col mb-12 w-full max-w-4xl">
@@ -99,11 +102,15 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-8 w-full max-w-4xl">
             {entries.map((entry) => (
+<<<<<<< HEAD
               <EntryCard
                 key={entry._id}
                 entry={entry}
                 onDelete={handleDelete}
               />
+=======
+              <EntryCard key={entry._id} entry={entry} />
+>>>>>>> 4f0b82507de308e6935960cf4912dc8379aee69d
             ))}
           </div>
         )}
