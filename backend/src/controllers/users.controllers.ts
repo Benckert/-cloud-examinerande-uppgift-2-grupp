@@ -64,7 +64,7 @@ export async function createUser(req: Request, res: Response) {
     const token = createJWT(newUser);
 
     // Returnera användaren utan passwordHash
-    res.status(200).json({
+    res.status(201).json({
       message: "User created successfully",
       token,
       data: { _id: newUser._id, name: newUser.name, email: newUser.email },
@@ -122,7 +122,7 @@ export async function userLogin(req: Request, res: Response) {
 // GET ALL USERS - TODO: lägg til JWT för auth?
 export async function getAllUsers(req: Request, res: Response) {
   try {
-    const users = await UserModel.find();
+    const users = await UserModel.find().select("-passwordHash");
 
     if (!users) {
       return res
@@ -141,7 +141,9 @@ export async function getAllUsers(req: Request, res: Response) {
 // GET USER BY ID
 export async function getUserById(req: Request, res: Response) {
   try {
-    const user = await UserModel.findById(req.params.id);
+    const user = await UserModel.findById(req.params.id).select(
+      "-passwordHash"
+    );
 
     if (!user) {
       return res.status(404).json({ error: "Requested user does not exist" });
@@ -178,7 +180,7 @@ export async function updateUserById(req: Request, res: Response) {
     // Uppdatera användare
     const user = await UserModel.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-    });
+    }).select("-passwordHash");
 
     if (!user) {
       return res.status(404).json({ error: "Requested user does not exist" });
@@ -195,7 +197,9 @@ export async function updateUserById(req: Request, res: Response) {
 //DELETE USER BY ID
 export async function deleteUserById(req: Request, res: Response) {
   try {
-    const user = await UserModel.findByIdAndDelete(req.params.id);
+    const user = await UserModel.findByIdAndDelete(req.params.id).select(
+      "-passwordHash"
+    );
 
     if (!user) {
       return res.status(404).json({ error: "Requested user does not exist" });
