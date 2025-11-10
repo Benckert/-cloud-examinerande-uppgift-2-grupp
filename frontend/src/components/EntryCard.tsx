@@ -30,8 +30,7 @@ export default function EntryCard({ entry, onDelete }: EntryCardProps) {
   return (
     <div className="card">
       <div className="mb-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-serif text-dark-brown">
+        <h2 className="text-2xl font-serif text-dark-brown mb-3">
           {entry.title}
         </h2>
           {entry.tags && (
