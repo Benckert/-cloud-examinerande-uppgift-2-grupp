@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import { connectDb } from "./db.js";
+import mongoose from "mongoose";
 
 import entriesRoutes from "./routes/entries.routes.js";
 import userControllers from "./routes/users.routes.js";
@@ -19,6 +20,29 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Health check endpoint - useful for Docker healthchecks and CI/CD
+app.get("/health", (req, res) => {
+  const healthStatus = {
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || "development",
+    mongodb:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+  };
+
+  // Return 503 if MongoDB is not connected
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      ...healthStatus,
+      status: "UNHEALTHY",
+    });
+  }
+
+  res.status(200).json(healthStatus);
+});
+
 app.use("/entries", entriesRoutes);
 app.use("/users", userControllers);
 
