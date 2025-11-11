@@ -25,7 +25,7 @@ const entrySchema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export type Entry = InferSchemaType<typeof entrySchema>;

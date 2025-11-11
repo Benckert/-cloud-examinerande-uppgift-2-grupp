@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Response } from "express";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { AuthRequest } from "../controllers/users.controllers.js";
@@ -18,7 +18,7 @@ export function auth(req: AuthRequest, res: Response, next: NextFunction) {
     // ⚠️ req.userId finns inte på standard Request, så cast till any
     (req as any).userId = decoded.id;
     next();
-  } catch (err) {
+  } catch (_err) {
     return res.status(403).json({ message: "Invalid token" });
   }
 }
