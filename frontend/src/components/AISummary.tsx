@@ -100,7 +100,7 @@ export default function AISummary() {
                 <>
                   <p>{feedback}</p>
 
-                  <div className="flex justify-end items-center ">
+                  <div className="flex justify-end items-center">
                     <span className="text-3xl  inline-block -translate-y-1">
                       /
                     </span>
