@@ -7,6 +7,7 @@ import { connectDb } from "./db.js"
 
 import entriesRoutes from "./routes/entries.routes.js"
 import userControllers from "./routes/users.routes.js"
+import aiRouter from "./controllers/ai.routes.js"
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url)
@@ -21,6 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/entries", entriesRoutes);
 app.use("/users", userControllers);
+app.use("/ai-summary", aiRouter);
 
 const PORT = process.env.PORT || 3000
 
