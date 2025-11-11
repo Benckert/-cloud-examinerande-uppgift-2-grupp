@@ -2,6 +2,7 @@ import { useState } from "react";
 import { entriesApi } from "@/lib/api/entries";
 import { TfiReload } from "react-icons/tfi";
 import { RxCross1 } from "react-icons/rx";
+import { div } from "framer-motion/client";
 
 interface AISummaryProps {
   userId?: string;
@@ -36,14 +37,21 @@ export default function AISummary() {
     <>
       {/* Flytande knapp */}
       {!visible && (
-        <button
-          onClick={fetchFeedback}
-          className="fixed bottom-8 right-8 bg-dark-brown p-3 rounded-full shadow-lg hover:bg-dark-brown/80 transition cursor-pointer text-2xl"
-          disabled={loading}
-          aria-label="Show AI feedback"
-        >
-          <span className="animate-pulse">🤖</span>
-        </button>
+        <>
+          <button
+            onClick={fetchFeedback}
+            className="fixed bottom-8 right-8 bg-dark-brown p-3 rounded-full shadow-md hover:bg-dark-brown/80 transition cursor-pointer text-2xl group"
+            disabled={loading}
+            aria-label="Show AI feedback"
+          >
+            <span className="animate-pulse">🤖</span>
+
+            {/* Tooltip */}
+            <span className="fixed bottom-21 right-8 bg-amber-100 text-amber-900 text-xs rounded-lg px-3 py-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              Se AI's feedback
+            </span>
+          </button>
+        </>
       )}
 
       {/* Modal */}
@@ -65,16 +73,14 @@ export default function AISummary() {
                 <button
                   onClick={fetchFeedback}
                   disabled={loading}
-                  className="p-1 rounded-md hover:bg-blue-100 hover:text-blue-800 transition"
+                  className="p-1 rounded-md hover:bg-amber-100 hover:text-amber-800 transition cursor-pointer"
                 >
                   <TfiReload />
-                  {/* {loading ? "Genererar..." : "Reload"} */}
                 </button>
                 {/* Stäng-knapp */}
-
                 <button
                   onClick={() => setVisible(false)}
-                  className="p-1 rounded-md hover:bg-red-100 hover:text-red-800 transition"
+                  className="p-1 rounded-md hover:bg-red-100 hover:text-red-800 transition cursor-pointer"
                 >
                   <RxCross1 />
                 </button>
