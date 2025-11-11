@@ -56,7 +56,7 @@ export default function NewEntryPage() {
   };
 
   /* Datum formattering och insättning bör flyttas till backend */
-  const displayDate = new Date().toLocaleDateString("en-US", {
+  const displayDate = new Date().toLocaleDateString("sv-SW", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -69,18 +69,18 @@ export default function NewEntryPage() {
     <div className="min-h-screen">
       <Header user={user} />
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto py-6">
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="text-warm-gray hover:text-dark-brown text-sm mb-4"
+            className="text-warm-gray hover:text-dark-brown text-sm mb-4 cursor-pointer"
           >
             ← Back to entries
           </button>
           <h1 className="text-4xl font-serif text-dark-brown mb-2">
             New Entry
           </h1>
-          <p className="text-warm-gray text-sm">{displayDate}</p>
+          <p className="text-warm-gray text-xs">{displayDate.toUpperCase()}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -150,7 +150,7 @@ export default function NewEntryPage() {
           <div className="flex gap-4">
             <button
               type="submit"
-              className="btn-primary"
+              className="btn-primary cursor-pointer"
               aria-label="save-entry"
               disabled={loading}
             >
@@ -159,7 +159,7 @@ export default function NewEntryPage() {
             <button
               type="button"
               onClick={() => router.back()}
-              className="btn-secondary"
+              className="btn-secondary cursor-pointer"
               disabled={loading}
             >
               Cancel

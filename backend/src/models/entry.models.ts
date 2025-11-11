@@ -1,6 +1,6 @@
 import mongoose, { Schema, InferSchemaType } from "mongoose";
 
-const journalSchema = new Schema(
+const entrySchema = new Schema(
   {
     title: { type: String },
     content: { type: String },
@@ -28,6 +28,6 @@ const journalSchema = new Schema(
   { timestamps: true }
 );
 
-export type Journal = InferSchemaType<typeof journalSchema>;
+export type Entry = InferSchemaType<typeof entrySchema>;
 
-export const JournalModel = mongoose.model("Journal", journalSchema);
+export const EntryModel = mongoose.model("Entry", entrySchema);
