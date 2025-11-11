@@ -1,7 +1,6 @@
-import express from "express";
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt, { type JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { UserModel } from "../models/user.models.js";
 import type { Types } from "mongoose";
 import dotenv from "dotenv";
@@ -12,13 +11,6 @@ const capitalize = <T extends string>(s: T) => {
   return (s[0]!.toUpperCase() + s.slice(1).toLowerCase()) as Capitalize<T>;
 };
 
-interface UserInput {
-  name: string;
-  email: string;
-  passwordHash?: string;
-  _id: Types.ObjectId;
-}
-
 export interface AuthRequest extends Request {
   user?: any;
 }
@@ -27,7 +19,7 @@ const createJWT = (user: { _id: Types.ObjectId; email: string }): string => {
   return jwt.sign(
     { id: user._id.toString() },
     process.env.JWT_SECRET as string,
-    { expiresIn: "48h" }
+    { expiresIn: "48h" },
   );
 };
 
@@ -142,7 +134,7 @@ export async function getAllUsers(req: Request, res: Response) {
 export async function getUserById(req: Request, res: Response) {
   try {
     const user = await UserModel.findById(req.params.id).select(
-      "-passwordHash"
+      "-passwordHash",
     );
 
     if (!user) {
@@ -198,7 +190,7 @@ export async function updateUserById(req: Request, res: Response) {
 export async function deleteUserById(req: Request, res: Response) {
   try {
     const user = await UserModel.findByIdAndDelete(req.params.id).select(
-      "-passwordHash"
+      "-passwordHash",
     );
 
     if (!user) {

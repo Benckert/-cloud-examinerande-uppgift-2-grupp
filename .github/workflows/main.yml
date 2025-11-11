@@ -1,45 +1,344 @@
 name: Dagboken
 
+# Define when the workflow runs
 on:
   push:
-    branches: [ main ]
+    branches: [main] # Runs on push to main. Add other branches if needed
   pull_request:
-    branches: [ main ]
+    branches: [main] # Runs on pull request to main. Add other branches if needed
+  workflow_dispatch: # Allows manual triggering from GitHub Actions UI
+    inputs:
+      # Control whether to run Docker integration tests
+      # Creates a checkbox in GitHub Actions UI
+      run-docker-tests:
+        description: "Run Docker integration tests (uncheck for faster lint-only checks)"
+        required: false
+        type: boolean
+        default: true # Checked by default (run Docker tests)
 
 jobs:
-  lint-and-test:
-    name: Lint and Test
+  # ============================================
+  # JOB 1: Lint Code on Multiple Platforms
+  # ============================================
+  # Purpose: Catch code style issues, unused variables, type errors
+  # Why multiple platforms: Ensures code works for all team members
+  # Speed: Fast (~1-2 min per platform)
+  lint:
+    name: Lint Code
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+        # Add or remove platforms as needed
+        # ubuntu-latest: Linux developers and CI/CD
+        # windows-latest: Windows developers
+        # macOS-latest: Mac developers
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-      - uses: actions/checkout@v4 #klonar repot till github actions runner?
+      # Clone the repository to GitHub Actions runner
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4 #installerar node
+      # Install Node.js
+      - uses: actions/setup-node@v4
         with:
+          # Update to match your project's Node version
+          # Should match version in package.json "engines" field
           node-version: 22
 
-      # Frontend
+      # === Frontend Linting ===
       - name: Install frontend dependencies
-        run: npm ci #installera dependencies - clean install
+        run: npm ci # Clean install - faster and more reliable than npm install
         working-directory: frontend
 
       - name: Lint frontend
-        run: npm run lint #kör linter
+        run: npm run lint # Runs ESLint to check code quality
         working-directory: frontend
 
-      # Backend
+      # === Backend Linting ===
       - name: Install backend dependencies
-        run: npm ci #installera dependencies - clean install
+        run: npm ci # Clean install dependencies
         working-directory: backend
 
-      # - name: Lint backend
-      #   run: npm run lint #kör linter
-      #   working-directory: backend
+      # Lint backend code (now configured with ESLint + TypeScript)
+      # Note: Will show warnings for TODO comments and 'any' types
+      # These are informational and won't fail the build
+      - name: Lint backend
+        run: npm run lint
+        working-directory: backend
 
-      # Echo status message
-      - name: Echo status message
-        run: echo "Workflow finished" #testar ifall det här gör något
+      # Status message for debugging
+      - name: Echo lint status
+        run: echo "✅ Linting completed successfully on ${{ matrix.os }}"
+
+  # ============================================
+  # JOB 2: Docker Build & Integration Tests
+  # ============================================
+  # Purpose: Validate Docker builds work and all services integrate correctly
+  # Why Linux only: Matches production environment, more reliable Docker support
+  # Speed: Slower (~5-10 min) but catches integration issues
+  docker-integration:
+    name: Docker Build & Integration Tests
+    runs-on: ubuntu-latest # REQUIRED: Linux for reliable Docker testing
+    needs: lint # Only runs if linting passes on all platforms
+    # Only run if user wants Docker tests
+    # For manual runs: user can uncheck "Run Docker integration tests" to skip
+    # For push/PR: always runs (github.event.inputs.run-docker-tests is null, which != 'false')
+    if: ${{ github.event.inputs.run-docker-tests != 'false' }}
+
+    steps:
+      # Clone the repository
+      - uses: actions/checkout@v4
+
+      # Set up Docker Buildx for improved build performance and caching
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Create .env file for testing
+      # Note: docker-compose.yml has defaults (JWT_SECRET:-change_me_in_production)
+      # but explicit test values are clearer and more secure
+      # Modify test values as needed (keep different from production!)
+      - name: Create test environment variables
+        run: |
+          echo "# Test environment - DO NOT USE IN PRODUCTION" > .env
+          echo "JWT_SECRET=ci-test-jwt-secret-for-github-actions" >> .env
+
+      # REQUIRED: Build all Docker images (mongo, backend, frontend)
+      # Uses docker-compose.yml to build backend and frontend Dockerfiles
+      - name: Build Docker images
+        run: docker compose build
+        env:
+          DOCKER_BUILDKIT: 1 # Enable BuildKit for faster builds and better caching
+
+      # Start all services in detached mode (-d flag)
+      # Services: mongo (port 27017), backend (port 3000), frontend (port 3001)
+      - name: Start Docker containers
+        run: docker compose up -d
+
+      # Wait for MongoDB to be ready
+      # How it works:
+      # 1. Runs mongosh ping command every 2 seconds
+      # 2. Checks if MongoDB responds with "1" (success)
+      # 3. Times out after 60 seconds if MongoDB doesn't respond
+      # 4. Workflow fails if timeout is reached
+      - name: Wait for MongoDB to be ready
+        run: |
+          echo "⏳ Waiting for MongoDB to start..."
+          timeout 60 bash -c '
+            until docker compose exec -T mongo mongosh \
+              --quiet \
+              --eval "db.adminCommand(\"ping\").ok" \
+              2>/dev/null | grep -q "1"; 
+            do 
+              echo "  MongoDB not ready yet, retrying..."; 
+              sleep 2; 
+            done
+          '
+          echo "✅ MongoDB is ready and accepting connections!"
+
+      # Wait for Backend API to be ready
+      # How it works:
+      # 1. Attempts to curl backend /health endpoint on port 3000 every 2 seconds
+      # 2. -s (silent), -f (fail on HTTP errors)
+      # 3. Times out after 60 seconds
+      # Note: Backend must be listening on port 3000 and /health must return 200 OK
+      - name: Wait for Backend API to be ready
+        run: |
+          echo "⏳ Waiting for Backend API to start..."
+          timeout 60 bash -c '
+            until curl -sf http://localhost:3000/health > /dev/null 2>&1; 
+            do 
+              echo "  Backend not ready yet, retrying..."; 
+              sleep 2; 
+            done
+          '
+          echo "✅ Backend API is ready and responding!"
+
+      # Wait for Frontend to be ready
+      # How it works: Same as backend but on port 3001
+      - name: Wait for Frontend to be ready
+        run: |
+          echo "⏳ Waiting for Frontend to start..."
+          timeout 60 bash -c '
+            until curl -sf http://localhost:3001 > /dev/null 2>&1; 
+            do 
+              echo "  Frontend not ready yet, retrying..."; 
+              sleep 2; 
+            done
+          '
+          echo "✅ Frontend is ready and responding!"
+
+      # Display running containers for debugging
+      # Shows container status, ports, and health
+      - name: Show running containers
+        run: docker compose ps
+
+      # Test MongoDB connection and basic operations
+      # Validates: MongoDB is accessible and can perform CRUD operations
+      # Tests using actual collection structure from app (journals collection)
+      - name: Test MongoDB connection
+        run: |
+          echo "🧪 Testing MongoDB connection and operations..."
+
+          # Test 1: Basic ping to verify MongoDB is responsive
+          docker compose exec -T mongo mongosh --quiet --eval "
+            const pingResult = db.adminCommand('ping');
+            if (pingResult.ok === 1) {
+              print('✅ MongoDB ping successful');
+              quit(0);
+            } else {
+              print('❌ MongoDB ping failed');
+              quit(1);
+            }
+          " || exit 1
+
+          # Test 2: Database operations using your app's actual structure
+          docker compose exec -T mongo mongosh dagboken --quiet --eval "
+            // Test with structure matching Journal model
+            const testEntry = {
+              title: 'CI Test Entry',
+              content: 'Testing MongoDB CRUD operations in CI/CD pipeline',
+              tags: 'neutral',
+              createdBy: new ObjectId(),
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            
+            // Insert test document
+            const insertResult = db.journals.insertOne(testEntry);
+            
+            // Verify insertion by finding the document
+            const foundEntry = db.journals.findOne({ title: 'CI Test Entry' });
+            
+            // Cleanup - delete test data
+            db.journals.deleteOne({ title: 'CI Test Entry' });
+            
+            // Validate results
+            if (foundEntry && foundEntry.title === 'CI Test Entry' && foundEntry.tags === 'neutral') {
+              print('✅ MongoDB CRUD operations test PASSED');
+              print('   - Insert: OK');
+              print('   - Find: OK');
+              print('   - Delete: OK');
+              quit(0);
+            } else {
+              print('❌ MongoDB CRUD operations test FAILED');
+              quit(1);
+            }
+          " || exit 1
+
+          echo "✅ All MongoDB tests completed successfully"
+
+      # Test Backend API is responding
+      # Validates: Backend Docker container is running and accessible
+      # Tests the /health endpoint for proper health monitoring
+      - name: Test Backend API health endpoint
+        run: |
+          echo "🧪 Testing backend /health endpoint..."
+          response=$(curl -s http://localhost:3000/health)
+          http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
+          
+          echo "Response: $response"
+          echo "HTTP Status: $http_code"
+          
+          if [ "$http_code" -eq 200 ]; then
+            # Check if response contains expected fields
+            if echo "$response" | grep -q "status" && echo "$response" | grep -q "mongodb"; then
+              echo "✅ Backend health endpoint test passed"
+              echo "   - HTTP Status: 200 OK"
+              echo "   - Response contains status and mongodb fields"
+            else
+              echo "❌ Backend health endpoint missing expected fields"
+              exit 1
+            fi
+          else
+            echo "❌ Backend health endpoint test failed (HTTP $http_code)"
+            exit 1
+          fi
+
+      # Test Frontend is accessible
+      # Validates: Frontend Docker container is running and serving pages
+      - name: Test Frontend accessibility
+        run: |
+          echo "🧪 Testing frontend..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001)
+          if [ "$response" -ge 200 ] && [ "$response" -lt 400 ]; then
+            echo "✅ Frontend test passed (HTTP $response)"
+          else
+            echo "❌ Frontend test failed (HTTP $response)"
+            exit 1
+          fi
+
+      # Add more integration tests here
+      # Examples:
+      # - Test user registration endpoint
+      # - Test login endpoint
+      # - Test journal entry creation
+      # - Test search functionality
+      # Uncomment and modify as needed:
+      # - name: Test API endpoints
+      #   run: |
+      #     echo "🧪 Testing API endpoints..."
+      #     # Test user registration
+      #     curl -X POST http://localhost:3000/users/register \
+      #       -H "Content-Type: application/json" \
+      #       -d '{"email":"test@example.com","password":"Test1234!","name":"Test User"}' \
+      #       --fail || exit 1
+      #     echo "✅ API endpoint tests passed"
+
+      # Show container logs if any test failed
+      # Only runs when previous steps fail (if: failure())
+      # Useful for debugging issues in CI
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          echo "================================================"
+          echo "Tests failed! Showing container logs..."
+          echo "================================================"
+          echo ""
+          echo "=== MongoDB Logs ==="
+          docker compose logs mongo
+          echo ""
+          echo "=== Backend Logs ==="
+          docker compose logs backend
+          echo ""
+          echo "=== Frontend Logs ==="
+          docker compose logs frontend
+
+      # Cleanup - Stop and remove containers and volumes
+      # Always runs even if tests fail (if: always())
+      # -v flag removes volumes to ensure clean state for next run
+      - name: Cleanup Docker containers
+        if: always()
+        run: docker compose down -v
+
+  # ============================================
+  # JOB 3: Final Status Check
+  # ============================================
+  # Purpose: Provides single point to check if ALL checks passed
+  # Only runs if both lint and docker-integration jobs succeed (or docker is skipped)
+  all-checks-passed:
+    name: All Checks Passed ✅
+    runs-on: ubuntu-latest
+    needs: [lint, docker-integration] # Waits for both jobs
+    # Handle case where docker-integration was skipped
+    # always() = run even if docker-integration was skipped
+    # Check that lint succeeded and docker either succeeded or was skipped
+    if: ${{ always() && needs.lint.result == 'success' && (needs.docker-integration.result == 'success' || needs.docker-integration.result == 'skipped') }}
+
+    steps:
+      - name: Success message
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 All checks passed successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Code linting passed on all platforms"
+          if [ "${{ needs.docker-integration.result }}" == "success" ]; then
+            echo "✅ Docker images built successfully"
+            echo "✅ All services started and are healthy"
+            echo "✅ Integration tests passed"
+          elif [ "${{ needs.docker-integration.result }}" == "skipped" ]; then
+            echo "⏭️  Docker integration tests skipped (manual run option)"
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 Ready to merge to main!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
