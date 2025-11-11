@@ -138,15 +138,15 @@ jobs:
 
       # Wait for Backend API to be ready
       # How it works:
-      # 1. Attempts to curl backend on port 3000 every 2 seconds
+      # 1. Attempts to curl backend /health endpoint on port 3000 every 2 seconds
       # 2. -s (silent), -f (fail on HTTP errors)
       # 3. Times out after 60 seconds
-      # Note: Backend must be listening on port 3000 and responding to requests
+      # Note: Backend must be listening on port 3000 and /health must return 200 OK
       - name: Wait for Backend API to be ready
         run: |
           echo "⏳ Waiting for Backend API to start..."
           timeout 60 bash -c '
-            until curl -sf http://localhost:3000 > /dev/null 2>&1; 
+            until curl -sf http://localhost:3000/health > /dev/null 2>&1; 
             do 
               echo "  Backend not ready yet, retrying..."; 
               sleep 2; 
@@ -230,15 +230,28 @@ jobs:
 
       # Test Backend API is responding
       # Validates: Backend Docker container is running and accessible
-      # Change URL if you add a /health endpoint
-      - name: Test Backend API accessibility
+      # Tests the /health endpoint for proper health monitoring
+      - name: Test Backend API health endpoint
         run: |
-          echo "🧪 Testing backend API..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-          if [ "$response" -ge 200 ] && [ "$response" -lt 400 ]; then
-            echo "✅ Backend API test passed (HTTP $response)"
+          echo "🧪 Testing backend /health endpoint..."
+          response=$(curl -s http://localhost:3000/health)
+          http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
+          
+          echo "Response: $response"
+          echo "HTTP Status: $http_code"
+          
+          if [ "$http_code" -eq 200 ]; then
+            # Check if response contains expected fields
+            if echo "$response" | grep -q "status" && echo "$response" | grep -q "mongodb"; then
+              echo "✅ Backend health endpoint test passed"
+              echo "   - HTTP Status: 200 OK"
+              echo "   - Response contains status and mongodb fields"
+            else
+              echo "❌ Backend health endpoint missing expected fields"
+              exit 1
+            fi
           else
-            echo "❌ Backend API test failed (HTTP $response)"
+            echo "❌ Backend health endpoint test failed (HTTP $http_code)"
             exit 1
           fi
 
