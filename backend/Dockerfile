@@ -22,6 +22,9 @@ ENV NODE_ENV=production
 # Ensure the app uses port 3000 inside the container
 ENV PORT=3000
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy package files and install ONLY production dependencies
 COPY package*.json ./
 RUN npm ci --omit=dev
@@ -30,6 +33,10 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
+
+# Healthcheck to ensure the container is running properly
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
 
 # Start the compiled app
 CMD ["node", "dist/index.js"]

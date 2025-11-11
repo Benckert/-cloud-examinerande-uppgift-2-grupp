@@ -3,6 +3,7 @@ version: "3.8"
 services:
   mongo:
     image: mongo:6
+    container_name: dagboken-mongo
     restart: unless-stopped
     volumes:
       - mongo-data:/data/db
@@ -15,6 +16,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: dagboken-backend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -31,6 +34,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: dagboken-frontend
+    restart: unless-stopped
     ports:
       - "3001:3001"
     environment:
