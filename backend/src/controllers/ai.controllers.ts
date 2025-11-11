@@ -6,14 +6,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export const aiSummary = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { createdBy } = req.body;
-    if (!createdBy) {
-      res.status(400).json({ error: "Missing userId" });
-      return;
-    }
+    const userId = (req as any).userId;
+
+    if (!userId) throw new Error("User ID not found in request");
 
     // Hämta de 10 senaste inläggen
-    const entries: Entry[] = await EntryModel.find({ createdBy })
+    const entries: Entry[] = await EntryModel.find({ createdBy: userId })
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
@@ -25,19 +23,17 @@ export const aiSummary = async (req: Request, res: Response): Promise<void> => {
 
     // Skapa texten med de 10 senaste inläggen
     const text = entries
-      .map(
-        (e, i) => `Entry ${i + 1}:\nTitle: ${e.title}\n${e.content}`
-      )
+      .map((e, i) => `Entry ${i + 1}:\nTitle: ${e.title}\n${e.content}`)
       .join("\n\n");
 
     // Skapa prompt
     const prompt = `
-You are a reflective and positive journaling coach.
-Analyze the following 10 diary entries and give personalized feedback:
-- recurring emotions or themes
-- possible insights or advice
-- end with a short encouraging note.
+Du är en positiv och reflekterande journaling-coach. 
+Analysera följande dagboksinlägg som en helhet. 
+Ge en **kort sammanfattande feedback på svenska** (1–2 meningar) som fokuserar på de viktigaste teman eller känslor som återkommer, och inkludera gärna ett uppmuntrande råd eller tips. 
+Skriv **inte feedback per inlägg**, utan en generell summering.
 
+Dagboksinlägg:
 ${text}
     `;
 
