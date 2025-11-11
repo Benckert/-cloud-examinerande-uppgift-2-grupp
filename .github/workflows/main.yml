@@ -106,14 +106,14 @@ jobs:
       # REQUIRED: Build all Docker images (mongo, backend, frontend)
       # Uses docker-compose.yml to build backend and frontend Dockerfiles
       - name: Build Docker images
-        run: docker-compose build
+        run: docker compose build
         env:
           DOCKER_BUILDKIT: 1 # Enable BuildKit for faster builds and better caching
 
       # Start all services in detached mode (-d flag)
       # Services: mongo (port 27017), backend (port 3000), frontend (port 3001)
       - name: Start Docker containers
-        run: docker-compose up -d
+        run: docker compose up -d
 
       # Wait for MongoDB to be ready
       # How it works:
@@ -125,7 +125,7 @@ jobs:
         run: |
           echo "⏳ Waiting for MongoDB to start..."
           timeout 60 bash -c '
-            until docker-compose exec -T mongo mongosh \
+            until docker compose exec -T mongo mongosh \
               --quiet \
               --eval "db.adminCommand(\"ping\").ok" \
               2>/dev/null | grep -q "1"; 
@@ -171,7 +171,7 @@ jobs:
       # Display running containers for debugging
       # Shows container status, ports, and health
       - name: Show running containers
-        run: docker-compose ps
+        run: docker compose ps
 
       # Test MongoDB connection and basic operations
       # Validates: MongoDB is accessible and can perform CRUD operations
@@ -181,7 +181,7 @@ jobs:
           echo "🧪 Testing MongoDB connection and operations..."
 
           # Test 1: Basic ping to verify MongoDB is responsive
-          docker-compose exec -T mongo mongosh --quiet --eval "
+          docker compose exec -T mongo mongosh --quiet --eval "
             const pingResult = db.adminCommand('ping');
             if (pingResult.ok === 1) {
               print('✅ MongoDB ping successful');
@@ -193,7 +193,7 @@ jobs:
           " || exit 1
 
           # Test 2: Database operations using your app's actual structure
-          docker-compose exec -T mongo mongosh dagboken --quiet --eval "
+          docker compose exec -T mongo mongosh dagboken --quiet --eval "
             // Test with structure matching Journal model
             const testEntry = {
               title: 'CI Test Entry',
@@ -283,20 +283,20 @@ jobs:
           echo "================================================"
           echo ""
           echo "=== MongoDB Logs ==="
-          docker-compose logs mongo
+          docker compose logs mongo
           echo ""
           echo "=== Backend Logs ==="
-          docker-compose logs backend
+          docker compose logs backend
           echo ""
           echo "=== Frontend Logs ==="
-          docker-compose logs frontend
+          docker compose logs frontend
 
       # Cleanup - Stop and remove containers and volumes
       # Always runs even if tests fail (if: always())
       # -v flag removes volumes to ensure clean state for next run
       - name: Cleanup Docker containers
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # ============================================
   # JOB 3: Final Status Check
