@@ -175,16 +175,58 @@ jobs:
 
       # Test MongoDB connection and basic operations
       # Validates: MongoDB is accessible and can perform CRUD operations
+      # Tests using actual collection structure from app (journals collection)
       - name: Test MongoDB connection
         run: |
           echo "🧪 Testing MongoDB connection and operations..."
+
+          # Test 1: Basic ping to verify MongoDB is responsive
           docker-compose exec -T mongo mongosh --quiet --eval "
-            use dagboken;
-            db.test.insertOne({test: 'CI test data', timestamp: new Date()});
-            const result = db.test.findOne({test: 'CI test data'});
-            print('MongoDB test: ' + (result ? 'PASSED ✅' : 'FAILED ❌'));
+            const pingResult = db.adminCommand('ping');
+            if (pingResult.ok === 1) {
+              print('✅ MongoDB ping successful');
+              quit(0);
+            } else {
+              print('❌ MongoDB ping failed');
+              quit(1);
+            }
           " || exit 1
-          echo "✅ MongoDB test completed successfully"
+
+          # Test 2: Database operations using your app's actual structure
+          docker-compose exec -T mongo mongosh dagboken --quiet --eval "
+            // Test with structure matching Journal model
+            const testEntry = {
+              title: 'CI Test Entry',
+              content: 'Testing MongoDB CRUD operations in CI/CD pipeline',
+              tags: 'neutral',
+              createdBy: new ObjectId(),
+              createdAt: new Date(),
+              updatedAt: new Date()
+            };
+            
+            // Insert test document
+            const insertResult = db.journals.insertOne(testEntry);
+            
+            // Verify insertion by finding the document
+            const foundEntry = db.journals.findOne({ title: 'CI Test Entry' });
+            
+            // Cleanup - delete test data
+            db.journals.deleteOne({ title: 'CI Test Entry' });
+            
+            // Validate results
+            if (foundEntry && foundEntry.title === 'CI Test Entry' && foundEntry.tags === 'neutral') {
+              print('✅ MongoDB CRUD operations test PASSED');
+              print('   - Insert: OK');
+              print('   - Find: OK');
+              print('   - Delete: OK');
+              quit(0);
+            } else {
+              print('❌ MongoDB CRUD operations test FAILED');
+              quit(1);
+            }
+          " || exit 1
+
+          echo "✅ All MongoDB tests completed successfully"
 
       # Test Backend API is responding
       # Validates: Backend Docker container is running and accessible
