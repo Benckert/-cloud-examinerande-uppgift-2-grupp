@@ -1,49 +1,62 @@
-import express from "express";
+import { Request, Response } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { EntryModel } from "./models/entry.models.ts"
+import { EntryModel, Entry } from "../models/entry.models.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
-const aiSummary = async (req: Request, res: Response) => {
+export const aiSummary = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = req.body.userId;
-    if (!userId) return res.status(400).json({ error: "Missing userId" });
-
-    // Hämta de 10 senaste inläggen
-    const entries = await Entry.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(10);
-
-    if (!entries.length) {
-      return res.status(400).json({ error: "No entries found for this user" });
+    const { createdBy } = req.body;
+    if (!createdBy) {
+      res.status(400).json({ error: "Missing userId" });
+      return;
     }
 
-    // Skapa prompt till Gemini
+    // Hämta de 10 senaste inläggen
+    const entries: Entry[] = await EntryModel.find({ createdBy })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .lean();
+
+    if (!entries.length) {
+      res.status(404).json({ error: "No entries found for this user" });
+      return;
+    }
+
+    // Skapa texten med de 10 senaste inläggen
     const text = entries
       .map(
-        (e, i) => Entry ${i + 1}: ${e.title}\n${e.content}
+        (e, i) => `Entry ${i + 1}:\nTitle: ${e.title}\n${e.content}`
       )
       .join("\n\n");
 
-    const prompt = 
-      You are a reflective and positive journaling coach.
-      Analyze the following 10 diary entries and give personalized feedback:
-      - recurring emotions or themes
-      - possible insights or advice
-      - end with a short encouraging note.
+    // Skapa prompt
+    const prompt = `
+You are a reflective and positive journaling coach.
+Analyze the following 10 diary entries and give personalized feedback:
+- recurring emotions or themes
+- possible insights or advice
+- end with a short encouraging note.
 
-      ${text}
-    ;
+${text}
+    `;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-    const result = await model.generateContent(prompt);
-    const feedback = result.response.text();
 
+    // Gemini kräver "contents" i generateContent()
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
+
+    const feedback = result.response.text();
     res.json({ feedback });
   } catch (err) {
-    console.error(err);
+    console.error("AI Summary Error:", err);
     res.status(500).json({ error: "Failed to generate AI feedback" });
   }
 };
-
-export default aiSummary;

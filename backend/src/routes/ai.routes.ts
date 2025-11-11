@@ -1,4 +1,4 @@
-import aiSummary from "../controllers/ai.controllers.js"
+import { aiSummary } from "../controllers/ai.controllers.js";
 import { Router } from "express";
 import { auth } from "../middleware/auth.middleware.js"
 

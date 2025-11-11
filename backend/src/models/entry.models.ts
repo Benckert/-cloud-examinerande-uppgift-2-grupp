@@ -1,9 +1,9 @@
-import mongoose, { Schema, InferSchemaType } from "mongoose";
+import mongoose, { Schema, InferSchemaType, Types } from "mongoose";
 
 const entrySchema = new Schema(
   {
-    title: { type: String },
-    content: { type: String },
+    title: { type: String, required: true },
+    content: { type: String, required: true },
     tags: {
       type: String,
       enum: [
@@ -28,6 +28,8 @@ const entrySchema = new Schema(
   { timestamps: true }
 );
 
-export type Entry = InferSchemaType<typeof entrySchema>;
+export type Entry = InferSchemaType<typeof entrySchema> & {
+  createdBy: Types.ObjectId;
+};
 
 export const EntryModel = mongoose.model("Entry", entrySchema);
