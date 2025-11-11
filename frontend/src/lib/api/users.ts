@@ -17,7 +17,9 @@ export const usersApi = {
     if (!response.ok) {
       throw new Error("Failed to create the user");
     }
-    return response.json();
+    const data = await response.json();
+    localStorage.setItem("token", data.token);
+    return data.data;
   },
   async signIn(userData: { email: string; password: string }): Promise<User> {
     const response = await fetch(`${API_BASE_URL}/users/login`, {

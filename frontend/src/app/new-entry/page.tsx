@@ -13,8 +13,8 @@ export default function NewEntryPage() {
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [ mood, setMood ] = useState<string>("neutral");
-  const [user, setUser] = useState<{ name: string } | null>(null)
+  const [mood, setMood] = useState<string>("neutral");
+  const [user, setUser] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -42,21 +42,21 @@ export default function NewEntryPage() {
     setLoading(true);
 
     try {
-      await entriesApi.create({ title, content, tags: mood })
-      router.push("/dashboard")
+      await entriesApi.create({ title, content, tags: mood });
+      router.push("/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message || "Failed to create entry")
+        setError(err.message || "Failed to create entry");
       } else {
-        setError(String(err) || "Failed to create entry")
+        setError(String(err) || "Failed to create entry");
       }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   };
 
   /* Datum formattering och insättning bör flyttas till backend */
-  const displayDate = new Date().toLocaleDateString("en-US", {
+  const displayDate = new Date().toLocaleDateString("sv-SW", {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -67,20 +67,20 @@ export default function NewEntryPage() {
 
   return (
     <div className="min-h-screen">
-      <Header user={user}/>
+      <Header user={user} />
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto py-6">
         <div className="mb-8">
           <button
             onClick={() => router.back()}
-            className="text-warm-gray hover:text-dark-brown text-sm mb-4"
+            className="text-warm-gray hover:text-dark-brown text-sm mb-4 cursor-pointer"
           >
             ← Back to entries
           </button>
           <h1 className="text-4xl font-serif text-dark-brown mb-2">
             New Entry
           </h1>
-          <p className="text-warm-gray text-sm">{displayDate}</p>
+          <p className="text-warm-gray text-xs">{displayDate.toUpperCase()}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -105,22 +105,23 @@ export default function NewEntryPage() {
           <div>
             <label
               htmlFor="mood"
-              className="block text-sm mb-2 text-dark-brown font-medium">
-                How are you feeling today?
-              </label>
-              <select 
-                id="mood"
-                value={mood}
-                onChange={(e) => setMood(e.target.value)}
-                className="input-field text-xl"
-                disabled={loading}
-                >
-                  {moodOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.emoji} {option.label}
-                    </option>
-                  ))}
-                </select>
+              className="block text-sm mb-2 text-dark-brown font-medium"
+            >
+              How are you feeling today?
+            </label>
+            <select
+              id="mood"
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+              className="input-field text-xl"
+              disabled={loading}
+            >
+              {moodOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.emoji} {option.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div>
             <label
@@ -147,13 +148,18 @@ export default function NewEntryPage() {
           )}
 
           <div className="flex gap-4">
-            <button type="submit" className="btn-primary" disabled={loading}>
+            <button
+              type="submit"
+              className="btn-primary cursor-pointer"
+              aria-label="save-entry"
+              disabled={loading}
+            >
               {loading ? "Saving..." : "Save Entry"}
             </button>
             <button
               type="button"
               onClick={() => router.back()}
-              className="btn-secondary"
+              className="btn-secondary cursor-pointer"
               disabled={loading}
             >
               Cancel
