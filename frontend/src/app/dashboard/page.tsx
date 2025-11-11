@@ -123,7 +123,13 @@ export default function DashboardPage() {
    * Removes the deleted entry from the local state
    */
   const handleDelete = (deletedId: string) => {
-    setEntries(entries.filter((entry) => entry._id !== deletedId));
+    setEntries(entries.filter(entry => entry._id !== deletedId));
+  };
+
+  const handleUpdate = (id: string, updatedEntry: Partial<Entry>) => {
+    setEntries(entries.map(entry =>
+      entry._id === id ? { ...entry, ...updatedEntry } : entry
+    ));
   };
 
   // Loading state UI
@@ -223,6 +229,7 @@ export default function DashboardPage() {
                 key={entry._id}
                 entry={entry}
                 onDelete={handleDelete}
+                onUpdate={handleUpdate}
               />
             ))}
           </div>
