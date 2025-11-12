@@ -438,7 +438,7 @@ jobs:
   # Purpose: Provides single point to check if ALL checks passed
   # Only runs if both lint and docker-integration jobs succeed (or docker is skipped)
   all-checks-passed:
-    name: All Checks Passed ✅
+    name: All Checks Passed
     runs-on: ubuntu-latest
     needs: [lint, docker-integration, build-and-push, trigger-deploy] # Waits for all jobs
     # Always run to report status, but only succeed if all needed jobs passed
