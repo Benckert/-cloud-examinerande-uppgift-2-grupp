@@ -21,10 +21,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
+      # For local development with local MongoDB
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3000
       - MONGODB_URI=mongodb://mongo:27017/dagboken
-      - JWT_SECRET=${JWT_SECRET:-change_me_in_production}
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     depends_on:
       - mongo
     networks:
@@ -39,11 +41,10 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - NODE_ENV=production
+      # For local development with local backend
+      - NODE_ENV=${NODE_ENV:-development}
       - PORT=3001
-      - NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
-      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:3000}
     depends_on:
       - backend
     networks:
