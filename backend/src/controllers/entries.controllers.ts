@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { EntryModel } from "../models/entry.models.js";
+import entryValidation from "../validation/entry.validate.js";
 
 export const getEntries = async (req: Request, res: Response) => {
   try {
@@ -44,7 +45,7 @@ export const getEntry = async (req: Request, res: Response) => {
 export const createEntry = async (req: Request, res: Response) => {
   try {
     const { title, content, tags } = req.body;
-    // TODO När vi har auth på plats
+
     const userId = (req as any).userId;
     if (!userId) throw new Error("User not authenticated");
 
@@ -56,6 +57,13 @@ export const createEntry = async (req: Request, res: Response) => {
       tags,
       createdBy: userId,
     });
+
+    // Validera task input
+    const parsed = entryValidation.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
+    };
 
     await newEntry.save();
 
@@ -71,8 +79,6 @@ export const createEntry = async (req: Request, res: Response) => {
 export const updateEntry = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO När vi har auth på plats
-    // const userId = req.user?.userId;
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: "Invalid entry ID" });
@@ -81,9 +87,13 @@ export const updateEntry = async (req: Request, res: Response) => {
     if (!existingEntry)
       return res.status(404).json({ error: "Entry not found" });
 
-    // if(existingEntry.createdBy.toString() !== userId) {
-    //   return res.status(403).json({ error: "Not authorized to update this entry" });
-    // }
+    // Partial validering ifall man bara ändrar ett fält
+    const parsed = entryValidation.partial().safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
+    };
+
     const updatedEntry = await EntryModel.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
@@ -100,8 +110,6 @@ export const updateEntry = async (req: Request, res: Response) => {
 export const deleteEntry = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // TODO När vi har auth på plats
-    // const userId = req.user?.userId;
 
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: "Invalid entry ID" });
@@ -109,9 +117,6 @@ export const deleteEntry = async (req: Request, res: Response) => {
     const existingEntry = await EntryModel.findById(id);
     if (!existingEntry)
       return res.status(404).json({ error: "Entry not found" });
-
-    // if(existingEntry.createdBy.toString() !== userId) {
-    //   return res.status(403).json({ error: "Not authorized to delete this entry" });
 
     const entry = await EntryModel.findByIdAndDelete(id);
     res

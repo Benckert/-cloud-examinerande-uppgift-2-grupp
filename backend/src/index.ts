@@ -56,6 +56,6 @@ await connectDb()
       console.log(`Server running on port ${PORT}`);
     });
   })
-  .catch((err: any) => {
+  .catch((err) => {
     console.log("Error connecting to MongoDB ", err);
   });

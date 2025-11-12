@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/user.models.js";
+import { UserModel} from "../models/user.models.js";
 import type { Types } from "mongoose";
 import dotenv from "dotenv";
+import userValidation from "../validation/user.validate.js";
+
 dotenv.config();
 
 const capitalize = <T extends string>(s: T) => {
@@ -12,7 +14,7 @@ const capitalize = <T extends string>(s: T) => {
 };
 
 export interface AuthRequest extends Request {
-  user?: any;
+  user?: typeof UserModel;
 }
 
 const createJWT = (user: { _id: Types.ObjectId; email: string }): string => {
@@ -35,6 +37,13 @@ export async function createUser(req: Request, res: Response) {
     // Formattera namn och email
     const formattedEmail = email.toLowerCase();
     const formattedName = capitalize(name);
+
+    // Zod validering
+    const parsed = userValidation.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
+    };
 
     // Kolla om användaren redan finns
     const existingUser = await UserModel.findOne({ email: formattedEmail });
@@ -111,7 +120,7 @@ export async function userLogin(req: Request, res: Response) {
   }
 }
 
-// GET ALL USERS - TODO: lägg til JWT för auth?
+// GET ALL USERS
 export async function getAllUsers(req: Request, res: Response) {
   try {
     const users = await UserModel.find().select("-passwordHash");
@@ -162,7 +171,12 @@ export async function updateUserById(req: Request, res: Response) {
       req.body.email = req.body.email.toLowerCase();
     }
 
-    /* TODO: validering? */
+    // Validera inputen men bara det som anges i body
+    const parsed = userValidation.partial().safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
+    };
 
     // Kryptera nytt lösenord
     if (req.body.passwordHash) {
