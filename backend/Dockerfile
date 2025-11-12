@@ -18,9 +18,14 @@ RUN npm run build
 # Production runtime image
 FROM node:22-alpine AS runner
 WORKDIR /app
+
+# Set production defaults
+# These can be overridden by Render environment variables at runtime
 ENV NODE_ENV=production
-# Ensure the app uses port 3000 inside the container
 ENV PORT=3000
+
+# Note: Backend env vars (JWT_SECRET, MONGODB_URI, etc.) 
+# are used at RUNTIME, not build time, so ARG is not needed
 
 # Install curl for healthcheck
 RUN apk add --no-cache curl
