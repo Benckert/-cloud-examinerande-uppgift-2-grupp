@@ -109,7 +109,7 @@ jobs:
           echo "# Test environment - DO NOT USE IN PRODUCTION" > .env
           echo "JWT_SECRET=ci-test-jwt-secret-for-github-actions" >> .env
 
-      # REQUIRED: Build all Docker images (mongo, backend, frontend)
+      # Build all Docker images (mongo, backend, frontend)
       # Uses docker-compose.yml to build backend and frontend Dockerfiles
       - name: Build Docker images
         run: docker compose build
@@ -242,10 +242,10 @@ jobs:
           echo "🧪 Testing backend /health endpoint..."
           response=$(curl -s http://localhost:3000/health)
           http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
-          
+
           echo "Response: $response"
           echo "HTTP Status: $http_code"
-          
+
           if [ "$http_code" -eq 200 ]; then
             # Check if response contains expected fields
             if echo "$response" | grep -q "status" && echo "$response" | grep -q "mongodb"; then
@@ -468,13 +468,13 @@ jobs:
             echo "❌ Lint job failed or was cancelled"
             exit 1
           fi
-          
+
           # Docker integration must succeed or be skipped (can be skipped via manual trigger)
           if [ "${{ needs.docker-integration.result }}" != "success" ] && [ "${{ needs.docker-integration.result }}" != "skipped" ]; then
             echo "❌ Docker integration job failed or was cancelled"
             exit 1
           fi
-          
+
           echo "✅ All required jobs passed!"
 
       - name: Success message
@@ -484,7 +484,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
           echo "✅ Code linting passed on all platforms"
-          
+
           if [ "${{ needs.docker-integration.result }}" == "success" ]; then
             echo "✅ Docker images built successfully"
             echo "✅ All services started and are healthy"
@@ -492,9 +492,9 @@ jobs:
           elif [ "${{ needs.docker-integration.result }}" == "skipped" ]; then
             echo "⏭️  Docker integration tests skipped"
           fi
-          
+
           echo ""
-          
+
           if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "🚀 Additional steps on main branch:"
             echo "   ✅ Docker images will be pushed to Docker Hub"
@@ -504,7 +504,7 @@ jobs:
             echo "📋 Pull Request validation complete!"
             echo "   Ready to merge after approval"
           fi
-          
+
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "✅ CI/CD Pipeline Validation Complete!"
@@ -538,12 +538,12 @@ jobs:
             echo "❌ Build and push job failed"
             exit 1
           fi
-          
+
           if [ "${{ needs.trigger-deploy.result }}" != "success" ]; then
             echo "❌ Trigger deploy job failed"
             exit 1
           fi
-          
+
           echo "✅ All deployment jobs completed successfully!"
 
       - name: Deployment success message
