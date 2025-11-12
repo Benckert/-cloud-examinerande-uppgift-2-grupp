@@ -43,7 +43,7 @@ export default function AISummary() {
 
             {/* Tooltip */}
             <span className="fixed bottom-21 right-8 bg-amber-100 text-amber-900 text-xs rounded-lg px-3 py-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              Se A`$apos`s feedback
+              Se AI feedback
             </span>
           </button>
         </>

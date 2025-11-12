@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 
 import aiRouter from "./routes/ai.routes.js";
 import entriesRoutes from "./routes/entries.routes.js";
-import userControllers from "./routes/users.routes.js";
+import userRoutes from "./routes/users.routes.js";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -45,7 +45,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/entries", entriesRoutes);
-app.use("/users", userControllers);
+app.use("/users", userRoutes);
 app.use("/api", aiRouter);
 
 const PORT = process.env.PORT || 3000;
