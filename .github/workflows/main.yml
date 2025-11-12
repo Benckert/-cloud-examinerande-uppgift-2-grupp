@@ -441,12 +441,8 @@ jobs:
     name: All Checks Passed ✅
     runs-on: ubuntu-latest
     needs: [lint, docker-integration, build-and-push, trigger-deploy] # Waits for all jobs
-    # Run if tests passed, and either build succeeded or was skipped (PR case)
-    if: ${{ always() && needs.lint.result == 'success' && (needs.docker-integration.result == 'success' || needs.docker-integration.result == 'skipped') && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') && (needs.trigger-deploy.result == 'success' || needs.trigger-deploy.result == 'skipped') }}
-    # Handle case where docker-integration was skipped
-    # always() = run even if docker-integration was skipped
-    # Check that lint succeeded and docker either succeeded or was skipped
-    if: ${{ always() && needs.lint.result == 'success' && (needs.docker-integration.result == 'success' || needs.docker-integration.result == 'skipped') }}
+    # Always run to report status, but only succeed if all needed jobs passed
+    if: ${{ always() }}
 
     steps:
       - name: Success message
