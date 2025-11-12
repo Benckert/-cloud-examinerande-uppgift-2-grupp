@@ -16,7 +16,7 @@ export function auth(req: AuthRequest, res: Response, next: NextFunction) {
       id: string;
     };
     // ⚠️ req.userId finns inte på standard Request, så cast till any
-    (req as AuthRequest).userId = decoded.id;
+    (req as any).userId = decoded.id;
     next();
   } catch (_err) {
     return res.status(403).json({ message: "Invalid token" });

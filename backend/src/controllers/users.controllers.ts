@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/user.models.js";
+import { UserModel} from "../models/user.models.js";
 import type { Types } from "mongoose";
 import dotenv from "dotenv";
 import userValidation from "../validation/user.validate.js";
@@ -14,7 +14,7 @@ const capitalize = <T extends string>(s: T) => {
 };
 
 export interface AuthRequest extends Request {
-  user?: UserModel;
+  user?: typeof UserModel;
 }
 
 const createJWT = (user: { _id: Types.ObjectId; email: string }): string => {
