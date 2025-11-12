@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 
 import aiRouter from "./routes/ai.routes.js";
 import entriesRoutes from "./routes/entries.routes.js";
-import userControllers from "./routes/users.routes.js";
+import userRoutes from "./routes/users.routes.js";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -19,13 +19,60 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 
-app.use(cors());
+// ============================================
+// CORS Configuration
+// ============================================
+// Configure Cross-Origin Resource Sharing to allow frontend to communicate with backend
+app.use(
+  cors({
+    // Allowed origins based on environment
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [
+            "https://dagboken-frontend.onrender.com", // Frontend production server
+          ]
+        : [
+            "http://localhost:3001", // Frontend development server
+            "http://localhost:3000", // Backend development server (for testing)
+            "http://127.0.0.1:3001", // Frontend development server (IPv4)
+            "http://127.0.0.1:3000", // Backend development server (IPv4)
+          ],
+
+    // Allow cookies and authentication headers
+    credentials: true,
+
+    // Allowed HTTP methods
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+    // Allowed request headers
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+    ],
+
+    // Exposed response headers (frontend can read these)
+    exposedHeaders: ["Content-Range", "X-Content-Range"],
+
+    // Cache preflight request for 1 hour (reduces OPTIONS requests)
+    maxAge: 3600,
+
+    // Pass the CORS preflight response to the next handler
+    preflightContinue: false,
+
+    // Successful OPTIONS status code (some legacy browsers need 204)
+    optionsSuccessStatus: 204,
+  }),
+);
+
 app.use(express.json());
 
 // Health check endpoint - useful for Docker healthchecks and CI/CD
 app.get("/health", (req, res) => {
   const healthStatus = {
     status: "OK",
+    version: "1.0.1",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || "development",
@@ -45,7 +92,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/entries", entriesRoutes);
-app.use("/users", userControllers);
+app.use("/users", userRoutes);
 app.use("/api", aiRouter);
 
 const PORT = process.env.PORT || 3000;
@@ -56,6 +103,6 @@ await connectDb()
       console.log(`Server running on port ${PORT}`);
     });
   })
-  .catch((err: any) => {
+  .catch((err) => {
     console.log("Error connecting to MongoDB ", err);
   });

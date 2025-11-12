@@ -219,6 +219,7 @@ export default function DashboardPage() {
               No entries found matching &quot;{searchQuery}&quot;
             </p>
             <button
+              aria-label="clear search"
               onClick={() => setSearchQuery("")}
               className="btn-secondary"
             >

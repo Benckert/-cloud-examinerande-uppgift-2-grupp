@@ -1,4 +1,4 @@
-name: Dagboken
+name: Dagboken CI/CD
 
 # Define when the workflow runs
 on:
@@ -15,6 +15,12 @@ on:
         required: false
         type: boolean
         default: true # Checked by default (run Docker tests)
+
+# Environment variables accessible to all jobs
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dagboken-backend
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dagboken-frontend
 
 jobs:
   # ============================================
@@ -103,7 +109,7 @@ jobs:
           echo "# Test environment - DO NOT USE IN PRODUCTION" > .env
           echo "JWT_SECRET=ci-test-jwt-secret-for-github-actions" >> .env
 
-      # REQUIRED: Build all Docker images (mongo, backend, frontend)
+      # Build all Docker images (mongo, backend, frontend)
       # Uses docker-compose.yml to build backend and frontend Dockerfiles
       - name: Build Docker images
         run: docker compose build
@@ -236,10 +242,10 @@ jobs:
           echo "🧪 Testing backend /health endpoint..."
           response=$(curl -s http://localhost:3000/health)
           http_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
-          
+
           echo "Response: $response"
           echo "HTTP Status: $http_code"
-          
+
           if [ "$http_code" -eq 200 ]; then
             # Check if response contains expected fields
             if echo "$response" | grep -q "status" && echo "$response" | grep -q "mongodb"; then
@@ -312,33 +318,264 @@ jobs:
         run: docker compose down -v
 
   # ============================================
-  # JOB 3: Final Status Check
+  # JOB 3: Build & Push to Docker Hub
   # ============================================
-  # Purpose: Provides single point to check if ALL checks passed
-  # Only runs if both lint and docker-integration jobs succeed (or docker is skipped)
-  all-checks-passed:
-    name: All Checks Passed ✅
+  # This job builds Docker images and pushes them to Docker Hub
+  # Only runs on successful push to main branch (not on PRs)
+  build-and-push:
+    name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
-    needs: [lint, docker-integration] # Waits for both jobs
-    # Handle case where docker-integration was skipped
-    # always() = run even if docker-integration was skipped
-    # Check that lint succeeded and docker either succeeded or was skipped
-    if: ${{ always() && needs.lint.result == 'success' && (needs.docker-integration.result == 'success' || needs.docker-integration.result == 'skipped') }}
+    needs: [lint, docker-integration]
+    # Only run on push to main (not on pull requests)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to Docker Hub using secrets
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build and push backend image
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache,mode=max
+
+      # Build and push frontend image
+      # ✅ CRITICAL: Pass NEXT_PUBLIC_API_BASE_URL as build argument
+      # This ensures the production backend URL is baked into the Next.js bundle
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          # Pass environment variables as build arguments
+          # These are available during Docker build (ARG in Dockerfile)
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://dagboken-backend.onrender.com
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
+
+      - name: Image digest and deployment info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Images pushed to Docker Hub successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📦 Backend Image:"
+          echo "   ${{ env.BACKEND_IMAGE }}:latest"
+          echo "   ${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
+          echo ""
+          echo "📦 Frontend Image:"
+          echo "   ${{ env.FRONTEND_IMAGE }}:latest"
+          echo "   ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}"
+          echo ""
+          echo "🔧 Frontend built with:"
+          echo "   NEXT_PUBLIC_API_BASE_URL=https://dagboken-backend.onrender.com"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ============================================
+  # JOB 4: Trigger Render Deployment
+  # ============================================
+  # Triggers Render to deploy new images immediately via webhooks
+  # Without this, Render polls Docker Hub every 5-10 minutes
+  # With webhooks: Deploy starts immediately after images are pushed
+  trigger-deploy:
+    name: Trigger Render Deployment
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Backend Deployment
+        run: |
+          echo "🚀 Triggering Render backend deployment..."
+          curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+          echo "✅ Backend deployment triggered"
+
+      - name: Trigger Frontend Deployment
+        run: |
+          echo "🚀 Triggering Render frontend deployment..."
+          curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+          echo "✅ Frontend deployment triggered"
+
+      - name: Deployment info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Render deployments triggered successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "⏱️  Expected deployment time:"
+          echo "   Backend: ~2-3 minutes"
+          echo "   Frontend: ~3-5 minutes (Next.js takes longer)"
+          echo ""
+          echo "📊 Check deployment status:"
+          echo "   https://dashboard.render.com/"
+          echo ""
+          echo "🔗 Your services will be live at:"
+          echo "   Backend:  https://dagboken-backend.onrender.com"
+          echo "   Frontend: https://dagboken-frontend.onrender.com"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ============================================
+  # JOB 5: Final Status Check
+  # ============================================
+  # Purpose: Provides single point to check if ALL checks passed
+  # Adapts based on context: PR vs Push to main
+  all-checks-passed:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    # Different dependencies based on event type
+    # On PR: Only needs lint and docker-integration
+    # On push to main: Needs all jobs including deployment
+    needs: [lint, docker-integration]
+    if: ${{ always() }}
+
+    steps:
+      - name: Check job results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Checking CI/CD Pipeline Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Event: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref }}"
+          echo ""
+          echo "Job Results:"
+          echo "  Lint: ${{ needs.lint.result }}"
+          echo "  Docker Integration: ${{ needs.docker-integration.result }}"
+          echo ""
+
+      - name: Verify required jobs passed
+        run: |
+          # Lint must always succeed
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "❌ Lint job failed or was cancelled"
+            exit 1
+          fi
+
+          # Docker integration must succeed or be skipped (can be skipped via manual trigger)
+          if [ "${{ needs.docker-integration.result }}" != "success" ] && [ "${{ needs.docker-integration.result }}" != "skipped" ]; then
+            echo "❌ Docker integration job failed or was cancelled"
+            exit 1
+          fi
+
+          echo "✅ All required jobs passed!"
+
       - name: Success message
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 All checks passed successfully!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
           echo "✅ Code linting passed on all platforms"
+
           if [ "${{ needs.docker-integration.result }}" == "success" ]; then
             echo "✅ Docker images built successfully"
             echo "✅ All services started and are healthy"
             echo "✅ Integration tests passed"
           elif [ "${{ needs.docker-integration.result }}" == "skipped" ]; then
-            echo "⏭️  Docker integration tests skipped (manual run option)"
+            echo "⏭️  Docker integration tests skipped"
           fi
+
+          echo ""
+
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🚀 Additional steps on main branch:"
+            echo "   ✅ Docker images will be pushed to Docker Hub"
+            echo "   ✅ Render deployment will be triggered"
+            echo "   ⏱️  Check 'build-and-push' and 'trigger-deploy' jobs for progress"
+          else
+            echo "📋 Pull Request validation complete!"
+            echo "   Ready to merge after approval"
+          fi
+
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🚀 Ready to merge to main!"
+          echo "✅ CI/CD Pipeline Validation Complete!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ============================================
+  # JOB 6: Deployment Status (Main Branch Only)
+  # ============================================
+  # Separate job to verify deployment jobs completed on main
+  # Only runs after deployment jobs finish
+  deployment-complete:
+    name: Deployment Complete 🚀
+    runs-on: ubuntu-latest
+    needs: [build-and-push, trigger-deploy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check deployment job results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Deployment Job Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Build & Push: ${{ needs.build-and-push.result }}"
+          echo "Trigger Deploy: ${{ needs.trigger-deploy.result }}"
+          echo ""
+
+      - name: Verify deployment jobs succeeded
+        run: |
+          if [ "${{ needs.build-and-push.result }}" != "success" ]; then
+            echo "❌ Build and push job failed"
+            exit 1
+          fi
+
+          if [ "${{ needs.trigger-deploy.result }}" != "success" ]; then
+            echo "❌ Trigger deploy job failed"
+            exit 1
+          fi
+
+          echo "✅ All deployment jobs completed successfully!"
+
+      - name: Deployment success message
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Deployment Complete!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "✅ Docker images pushed to Docker Hub"
+          echo "✅ Render deployment webhooks triggered"
+          echo ""
+          echo "⏱️  Render is now deploying your application:"
+          echo "   Backend:  ~2-3 minutes"
+          echo "   Frontend: ~3-5 minutes"
+          echo ""
+          echo "📊 Monitor deployment progress:"
+          echo "   https://dashboard.render.com/"
+          echo ""
+          echo "🔗 Your application will be live at:"
+          echo "   Backend:  https://dagboken-backend.onrender.com"
+          echo "   Frontend: https://dagboken-frontend.onrender.com"
+          echo ""
+          echo "💡 Tip: Check /health endpoint after deployment:"
+          echo "   curl https://dagboken-backend.onrender.com/health"
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
