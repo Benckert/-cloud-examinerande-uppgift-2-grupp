@@ -4,10 +4,10 @@
 // NOTE: ESLint 9+ no longer supports .eslintignore files
 // Files to ignore are now configured in the "ignores" property below
 
-import eslint from "@eslint/js"
-import tseslint from "typescript-eslint"
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
 
-export default tseslint.config(
+export default [
   // Apply recommended ESLint rules for general JavaScript/TypeScript best practices
   eslint.configs.recommended,
 
@@ -37,8 +37,10 @@ export default tseslint.config(
       // ERROR: Use double quotes for strings (can escape if needed)
       quotes: ["error", "double", { avoidEscape: true }],
 
-      // ERROR: Use 2 spaces for indentation (consistent with project)
-      indent: ["error", 2],
+      // DISABLED: Let Prettier handle indentation
+      // ESLint's indent rule conflicts with Prettier's ternary formatting
+      indent: "off",
+      "@typescript-eslint/indent": "off",
 
       // ERROR: Require trailing commas in multi-line object/array literals
       // Makes git diffs cleaner when adding new items
@@ -137,5 +139,5 @@ export default tseslint.config(
       "coverage/**",
       ".env",
     ],
-  }
-)
+  },
+];
