@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import { EntryModel } from "../models/entry.models.js";
+import entryValidation from "../validation/entry.validate.js"
 
 export const getEntries = async (req: Request, res: Response) => {
   try {
@@ -57,6 +58,13 @@ export const createEntry = async (req: Request, res: Response) => {
       createdBy: userId,
     });
 
+    // Validera task input
+    const parsed = entryValidation.safeParse(req.body);
+        
+    if (!parsed.success) {
+        return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
+    };
+
     await newEntry.save();
 
     res.status(201).json(newEntry);
@@ -84,6 +92,14 @@ export const updateEntry = async (req: Request, res: Response) => {
     // if(existingEntry.createdBy.toString() !== userId) {
     //   return res.status(403).json({ error: "Not authorized to update this entry" });
     // }
+
+    // Partial validering ifall man bara ändrar ett fält
+    const parsed = entryValidation.partial().safeParse(req.body);
+        
+    if (!parsed.success) {
+        return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
+    };
+
     const updatedEntry = await EntryModel.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
