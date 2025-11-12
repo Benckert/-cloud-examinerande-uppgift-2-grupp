@@ -5,7 +5,7 @@ import entryValidation from "../validation/entry.validate.js";
 
 export const getEntries = async (req: Request, res: Response) => {
   try {
-    const userId = (req as Request).userId;
+    const userId = (req as any).userId;
 
     if (!userId) throw new Error("User ID not found in request");
 
@@ -46,7 +46,7 @@ export const createEntry = async (req: Request, res: Response) => {
   try {
     const { title, content, tags } = req.body;
 
-    const userId = (req as Request).userId;
+    const userId = (req as any).userId;
     if (!userId) throw new Error("User not authenticated");
 
     // if(!createdBy) return res.status(401).json({ error: "User not authenticated" });
@@ -133,7 +133,7 @@ export const deleteEntry = async (req: Request, res: Response) => {
 export const searchEntries = async (req: Request, res: Response) => {
   try {
     // Extract the authenticated user ID from the request (set by auth middleware)
-    const userId = (req as Request).userId;
+    const userId = (req as any).userId;
     if (!userId) throw new Error("User ID not found in request");
 
     // Get the search query from URL parameters

@@ -224,7 +224,7 @@ export async function deleteUserById(req: Request, res: Response) {
 // GET CURRENT USER
 export async function getCurrentUser(req: AuthRequest, res: Response) {
   try {
-    const userId = (req as Request).userId;
+    const userId = (req as any).userId;
     if (!userId) throw new Error("User ID not found in request");
 
     const user = await UserModel.findById(userId).select("-passwordHash");
