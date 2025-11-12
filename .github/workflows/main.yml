@@ -1,4 +1,4 @@
-name: Dagboken
+name: Dagboken CI/CD
 
 # Define when the workflow runs
 on:
@@ -15,6 +15,12 @@ on:
         required: false
         type: boolean
         default: true # Checked by default (run Docker tests)
+
+# Environment variables accessible to all jobs
+env:
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dagboken-backend
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dagboken-frontend
 
 jobs:
   # ============================================
@@ -312,7 +318,77 @@ jobs:
         run: docker compose down -v
 
   # ============================================
-  # JOB 3: Final Status Check
+  # JOB 3: Build & Push to Docker Hub
+  # ============================================
+  # This job builds Docker images and pushes them to Docker Hub
+  # Only runs on successful push to main branch (not on PRs)
+  build-and-push:
+    name: Build & Push to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [lint, docker-integration]
+    # Only run on push to main (not on pull requests)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to Docker Hub using secrets
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Build and push backend image
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache,mode=max
+
+      # Build and push frontend image
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
+
+      - name: Image digest and deployment info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Images pushed to Docker Hub successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "📦 Backend Image:"
+          echo "   ${{ env.BACKEND_IMAGE }}:latest"
+          echo "   ${{ env.BACKEND_IMAGE }}:${{ github.sha }}"
+          echo ""
+          echo "📦 Frontend Image:"
+          echo "   ${{ env.FRONTEND_IMAGE }}:latest"
+          echo "   ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}"
+          echo ""
+          echo "🚀 Render will auto-deploy these images in ~2-5 minutes"
+          echo "   (if auto-deploy is enabled on your Render services)"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ============================================
+  # JOB 4: Final Status Check
   # ============================================
   # Purpose: Provides single point to check if ALL checks passed
   # Only runs if both lint and docker-integration jobs succeed (or docker is skipped)
@@ -339,6 +415,10 @@ jobs:
           elif [ "${{ needs.docker-integration.result }}" == "skipped" ]; then
             echo "⏭️  Docker integration tests skipped (manual run option)"
           fi
+          if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "✅ Images will be pushed to Docker Hub"
+            echo "✅ Deployment will be triggered automatically"
+          fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🚀 Ready to merge to main!"
+          echo "🚀 Ready to merge/deploy!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
