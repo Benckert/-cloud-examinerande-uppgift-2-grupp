@@ -61,8 +61,6 @@ This app follows a minimalist, editorial design approach:
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
 
-## Fyll på med era reflektioner nedan!
-
 # Grupp 7 
 ## Andréa, Hanna, Kristoffer B, Sara
 
@@ -75,7 +73,6 @@ This app follows a minimalist, editorial design approach:
 * Vi satte regler att man inte kunde push direkt till main
     - Alltid ny branch och pull requests som krävde minst en review innan man kunde merge.
 * Vi gick ofta igenom pull requests tillsammans så alla fick inblick i varandras delar av projektet
-
 
 ### Commit historik
 * Vi skrev koncisa och beskrivande commit-meddelanden, t.ex. ‘Add responsive styles for entries page’ eller ‘Fix bug in signup form validation’.
@@ -93,10 +90,11 @@ This app follows a minimalist, editorial design approach:
 
 
 ### Tester
-* Frontend
 
 Projektet använder Jest tillsammans med React Testing Library för att testa komponenter och sidbeteenden i frontend.
 Vi har valt dessa verktyg eftersom de är standard i React/Next.js-projekt och låter oss testa användarinteraktioner på ett sätt som liknar verklig användning.
+Syftet med testerna är att säkerställa att applikationens kärnfunktioner fungerar som förväntat, utan att vara beroende av verkliga API-anrop eller databaser.
+För backend används enbart Jest för att testa Express-controllers i isolering.
 
 #### Använda paket
 
@@ -108,7 +106,7 @@ Vi har valt dessa verktyg eftersom de är standard i React/Next.js-projekt och l
 
 - @jest-environment-jsdom – för att köra tester i en simulerad webbläsarmiljö (DOM)
 
-
+- @jest – för att köra tester och mocka Mongoose-modeller
 
 ### Github Actions
 * Vi använde GitHub Actions för att automatisera delar av vårt arbetsflöde.
