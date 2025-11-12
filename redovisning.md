@@ -52,3 +52,14 @@
 
 ### AI -Sara
 * Vi använde AI som en lärare när vi behövde hjälp att komma igång och när vi inte förstod något. 
+* Mycket av koden är AI genererad där vi samtidigt försökt förstå vad koden gör medans vi implementwrade den. 
+
+### Reflektion
+
+* Fördelar med CI/CD Pipeline & varför det är viktigt i sjösättning av projekt. 
+
+- Tidigare felupptäckt - Buggar fångas redan vid pull request, inte efter release.
+- Stabilitet - Samma byggprocess körs varje gång – inga “it works on my machine problem.
+- Kvalitetssäkring - All kod testas automatiskt innan den når produktion.
+- Team-samarbete - PR-granskning + tester = tryggare merge-flöde.
+- Snabbare leverans - Ingen manuell deploy krävs – varje merge är potentiell release. 
