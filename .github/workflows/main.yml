@@ -382,20 +382,67 @@ jobs:
           echo "   ${{ env.FRONTEND_IMAGE }}:latest"
           echo "   ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}"
           echo ""
-          echo "🚀 Render will auto-deploy these images in ~2-5 minutes"
-          echo "   (if auto-deploy is enabled on your Render services)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ============================================
+  # JOB 4: Trigger Render Deployment
+  # ============================================
+  # Triggers Render to deploy new images immediately via webhooks
+  # Without this, Render polls Docker Hub every 5-10 minutes
+  # With webhooks: Deploy starts immediately after images are pushed
+  trigger-deploy:
+    name: Trigger Render Deployment
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Backend Deployment
+        run: |
+          echo "🚀 Triggering Render backend deployment..."
+          curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+          echo "✅ Backend deployment triggered"
+
+      - name: Trigger Frontend Deployment
+        run: |
+          echo "🚀 Triggering Render frontend deployment..."
+          curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP Status: %{http_code}\n"
+          echo "✅ Frontend deployment triggered"
+
+      - name: Deployment info
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Render deployments triggered successfully!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "⏱️  Expected deployment time:"
+          echo "   Backend: ~2-3 minutes"
+          echo "   Frontend: ~3-5 minutes (Next.js takes longer)"
+          echo ""
+          echo "📊 Check deployment status:"
+          echo "   https://dashboard.render.com/"
+          echo ""
+          echo "🔗 Your services will be live at:"
+          echo "   Backend:  https://dagboken-backend.onrender.com"
+          echo "   Frontend: https://dagboken-frontend.onrender.com"
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   # ============================================
-  # JOB 4: Final Status Check
+  # JOB 5: Final Status Check
   # ============================================
   # Purpose: Provides single point to check if ALL checks passed
   # Only runs if both lint and docker-integration jobs succeed (or docker is skipped)
   all-checks-passed:
     name: All Checks Passed ✅
     runs-on: ubuntu-latest
-    needs: [lint, docker-integration] # Waits for both jobs
+    needs: [lint, docker-integration, build-and-push, trigger-deploy] # Waits for all jobs
+    # Run if tests passed, and either build succeeded or was skipped (PR case)
+    if: ${{ always() && needs.lint.result == 'success' && (needs.docker-integration.result == 'success' || needs.docker-integration.result == 'skipped') && (needs.build-and-push.result == 'success' || needs.build-and-push.result == 'skipped') && (needs.trigger-deploy.result == 'success' || needs.trigger-deploy.result == 'skipped') }}
     # Handle case where docker-integration was skipped
     # always() = run even if docker-integration was skipped
     # Check that lint succeeded and docker either succeeded or was skipped
@@ -416,9 +463,10 @@ jobs:
             echo "⏭️  Docker integration tests skipped (manual run option)"
           fi
           if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "✅ Images will be pushed to Docker Hub"
-            echo "✅ Deployment will be triggered automatically"
+            echo "✅ Images pushed to Docker Hub"
+            echo "✅ Render deployment triggered via webhooks"
+            echo "🌐 Application deploying now!"
           fi
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🚀 Ready to merge/deploy!"
+          echo "🚀 CI/CD Pipeline Complete!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
