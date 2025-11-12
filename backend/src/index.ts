@@ -19,13 +19,29 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? [
+            "https://dagboken-frontend.onrender.com", // Frontend production server
+          ]
+        : [
+            "http://localhost:3001", // Frontend development server
+            "http://localhost:3000", // Backend development server
+            "http://127.0.0.1:3001", // Frontend development server (IPv4)
+            "http://127.0.0.1:3000", // Backend development server (IPv4)
+          ],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Health check endpoint - useful for Docker healthchecks and CI/CD
 app.get("/health", (req, res) => {
   const healthStatus = {
     status: "OK",
+    version: "1.0.1",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV || "development",
