@@ -356,6 +356,8 @@ jobs:
           cache-to: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache,mode=max
 
       # Build and push frontend image
+      # ✅ CRITICAL: Pass NEXT_PUBLIC_API_BASE_URL as build argument
+      # This ensures the production backend URL is baked into the Next.js bundle
       - name: Build and push frontend
         uses: docker/build-push-action@v5
         with:
@@ -365,6 +367,10 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          # Pass environment variables as build arguments
+          # These are available during Docker build (ARG in Dockerfile)
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=https://dagboken-backend.onrender.com
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
           cache-to: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache,mode=max
 
@@ -381,6 +387,9 @@ jobs:
           echo "📦 Frontend Image:"
           echo "   ${{ env.FRONTEND_IMAGE }}:latest"
           echo "   ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}"
+          echo ""
+          echo "🔧 Frontend built with:"
+          echo "   NEXT_PUBLIC_API_BASE_URL=https://dagboken-backend.onrender.com"
           echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
