@@ -62,3 +62,23 @@ This app follows a minimalist, editorial design approach:
 - [TypeScript Documentation](https://www.typescriptlang.org/docs)
 
 ## Fyll på med era reflektioner nedan!
+
+
+- Branching Stategy
+
+
+- Github Actions - issues & PR
+
+
+- Commit Historik
+
+
+- Github 
+
+
+- Docker
+
+
+- Tester
+
+
