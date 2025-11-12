@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { UserModel } from "../models/user.models.js";
 import type { Types } from "mongoose";
 import dotenv from "dotenv";
-import userValidation from "../validation/user.validate.js"
+import userValidation from "../validation/user.validate.js";
 
 dotenv.config();
 
@@ -14,7 +14,7 @@ const capitalize = <T extends string>(s: T) => {
 };
 
 export interface AuthRequest extends Request {
-  user?: any;
+  user?: UserModel;
 }
 
 const createJWT = (user: { _id: Types.ObjectId; email: string }): string => {
@@ -120,7 +120,7 @@ export async function userLogin(req: Request, res: Response) {
   }
 }
 
-// GET ALL USERS - TODO: lägg til JWT för auth?
+// GET ALL USERS
 export async function getAllUsers(req: Request, res: Response) {
   try {
     const users = await UserModel.find().select("-passwordHash");
@@ -177,7 +177,7 @@ export async function updateUserById(req: Request, res: Response) {
     if (!parsed.success) {
       return res.status(400).json({ error: "Validation failed. ", details: parsed.error });
     };
-  
+
     // Kryptera nytt lösenord
     if (req.body.passwordHash) {
       req.body.passwordHash = await bcrypt.hash(req.body.passwordHash, 10);
@@ -224,7 +224,7 @@ export async function deleteUserById(req: Request, res: Response) {
 // GET CURRENT USER
 export async function getCurrentUser(req: AuthRequest, res: Response) {
   try {
-    const userId = (req as any).userId;
+    const userId = (req as Request).userId;
     if (!userId) throw new Error("User ID not found in request");
 
     const user = await UserModel.findById(userId).select("-passwordHash");
