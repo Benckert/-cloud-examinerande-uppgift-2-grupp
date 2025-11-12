@@ -436,33 +436,137 @@ jobs:
   # JOB 5: Final Status Check
   # ============================================
   # Purpose: Provides single point to check if ALL checks passed
-  # Only runs if both lint and docker-integration jobs succeed (or docker is skipped)
+  # Adapts based on context: PR vs Push to main
   all-checks-passed:
     name: All Checks Passed
     runs-on: ubuntu-latest
-    needs: [lint, docker-integration, build-and-push, trigger-deploy] # Waits for all jobs
-    # Always run to report status, but only succeed if all needed jobs passed
+    # Different dependencies based on event type
+    # On PR: Only needs lint and docker-integration
+    # On push to main: Needs all jobs including deployment
+    needs: [lint, docker-integration]
     if: ${{ always() }}
 
     steps:
+      - name: Check job results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Checking CI/CD Pipeline Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Event: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref }}"
+          echo ""
+          echo "Job Results:"
+          echo "  Lint: ${{ needs.lint.result }}"
+          echo "  Docker Integration: ${{ needs.docker-integration.result }}"
+          echo ""
+
+      - name: Verify required jobs passed
+        run: |
+          # Lint must always succeed
+          if [ "${{ needs.lint.result }}" != "success" ]; then
+            echo "❌ Lint job failed or was cancelled"
+            exit 1
+          fi
+          
+          # Docker integration must succeed or be skipped (can be skipped via manual trigger)
+          if [ "${{ needs.docker-integration.result }}" != "success" ] && [ "${{ needs.docker-integration.result }}" != "skipped" ]; then
+            echo "❌ Docker integration job failed or was cancelled"
+            exit 1
+          fi
+          
+          echo "✅ All required jobs passed!"
+
       - name: Success message
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🎉 All checks passed successfully!"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
           echo "✅ Code linting passed on all platforms"
+          
           if [ "${{ needs.docker-integration.result }}" == "success" ]; then
             echo "✅ Docker images built successfully"
             echo "✅ All services started and are healthy"
             echo "✅ Integration tests passed"
           elif [ "${{ needs.docker-integration.result }}" == "skipped" ]; then
-            echo "⏭️  Docker integration tests skipped (manual run option)"
+            echo "⏭️  Docker integration tests skipped"
           fi
+          
+          echo ""
+          
           if [ "${{ github.event_name }}" == "push" ] && [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "✅ Images pushed to Docker Hub"
-            echo "✅ Render deployment triggered via webhooks"
-            echo "🌐 Application deploying now!"
+            echo "🚀 Additional steps on main branch:"
+            echo "   ✅ Docker images will be pushed to Docker Hub"
+            echo "   ✅ Render deployment will be triggered"
+            echo "   ⏱️  Check 'build-and-push' and 'trigger-deploy' jobs for progress"
+          else
+            echo "📋 Pull Request validation complete!"
+            echo "   Ready to merge after approval"
           fi
+          
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "🚀 CI/CD Pipeline Complete!"
+          echo "✅ CI/CD Pipeline Validation Complete!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+  # ============================================
+  # JOB 6: Deployment Status (Main Branch Only)
+  # ============================================
+  # Separate job to verify deployment jobs completed on main
+  # Only runs after deployment jobs finish
+  deployment-complete:
+    name: Deployment Complete 🚀
+    runs-on: ubuntu-latest
+    needs: [build-and-push, trigger-deploy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check deployment job results
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Deployment Job Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Build & Push: ${{ needs.build-and-push.result }}"
+          echo "Trigger Deploy: ${{ needs.trigger-deploy.result }}"
+          echo ""
+
+      - name: Verify deployment jobs succeeded
+        run: |
+          if [ "${{ needs.build-and-push.result }}" != "success" ]; then
+            echo "❌ Build and push job failed"
+            exit 1
+          fi
+          
+          if [ "${{ needs.trigger-deploy.result }}" != "success" ]; then
+            echo "❌ Trigger deploy job failed"
+            exit 1
+          fi
+          
+          echo "✅ All deployment jobs completed successfully!"
+
+      - name: Deployment success message
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎉 Deployment Complete!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "✅ Docker images pushed to Docker Hub"
+          echo "✅ Render deployment webhooks triggered"
+          echo ""
+          echo "⏱️  Render is now deploying your application:"
+          echo "   Backend:  ~2-3 minutes"
+          echo "   Frontend: ~3-5 minutes"
+          echo ""
+          echo "📊 Monitor deployment progress:"
+          echo "   https://dashboard.render.com/"
+          echo ""
+          echo "🔗 Your application will be live at:"
+          echo "   Backend:  https://dagboken-backend.onrender.com"
+          echo "   Frontend: https://dagboken-frontend.onrender.com"
+          echo ""
+          echo "💡 Tip: Check /health endpoint after deployment:"
+          echo "   curl https://dagboken-backend.onrender.com/health"
+          echo ""
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
