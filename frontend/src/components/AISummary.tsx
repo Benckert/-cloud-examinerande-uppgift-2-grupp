@@ -2,11 +2,6 @@ import { useState } from "react";
 import { entriesApi } from "@/lib/api/entries";
 import { TfiReload } from "react-icons/tfi";
 import { RxCross1 } from "react-icons/rx";
-import { div } from "framer-motion/client";
-
-interface AISummaryProps {
-  userId?: string;
-}
 
 export default function AISummary() {
   const [feedback, setFeedback] = useState<string>("");
@@ -48,7 +43,7 @@ export default function AISummary() {
 
             {/* Tooltip */}
             <span className="fixed bottom-21 right-8 bg-amber-100 text-amber-900 text-xs rounded-lg px-3 py-1 shadow-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-              Se AI's feedback
+              Se A`$apos`s feedback
             </span>
           </button>
         </>
