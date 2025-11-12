@@ -8,6 +8,7 @@ import { Entry } from "@/types/database.types";
 import Link from "next/link";
 import { usersApi } from "@/lib/api/users";
 import { entriesApi } from "@/lib/api/entries";
+import AISummary from "@/components/AISummary";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -123,13 +124,15 @@ export default function DashboardPage() {
    * Removes the deleted entry from the local state
    */
   const handleDelete = (deletedId: string) => {
-    setEntries(entries.filter(entry => entry._id !== deletedId));
+    setEntries(entries.filter((entry) => entry._id !== deletedId));
   };
 
   const handleUpdate = (id: string, updatedEntry: Partial<Entry>) => {
-    setEntries(entries.map(entry =>
-      entry._id === id ? { ...entry, ...updatedEntry } : entry
-    ));
+    setEntries(
+      entries.map((entry) =>
+        entry._id === id ? { ...entry, ...updatedEntry } : entry
+      )
+    );
   };
 
   // Loading state UI
@@ -166,6 +169,7 @@ export default function DashboardPage() {
             <h2 className="text-3xl font-serif text-dark-brown mb-2">
               Your Entries
             </h2>
+
             <Link href="/new-entry">
               <button className="btn-primary cursor-pointer">New Entry</button>
             </Link>
@@ -234,6 +238,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+        <AISummary />
       </main>
     </div>
   );

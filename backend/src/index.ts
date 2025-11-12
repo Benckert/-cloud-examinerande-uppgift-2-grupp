@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import { connectDb } from "./db.js";
 import mongoose from "mongoose";
 
+import aiRouter from "./routes/ai.routes.js";
 import entriesRoutes from "./routes/entries.routes.js";
 import userControllers from "./routes/users.routes.js";
 
@@ -45,6 +46,7 @@ app.get("/health", (req, res) => {
 
 app.use("/entries", entriesRoutes);
 app.use("/users", userControllers);
+app.use("/api", aiRouter);
 
 const PORT = process.env.PORT || 3000;
 
