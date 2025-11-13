@@ -87,7 +87,20 @@ This app follows a minimalist, editorial design approach:
 * Vi gick regelbundet igenom boarden på våra möten – det hjälpte oss att se statusen i projektet och fördela arbetet jämt.
 
 ### Docker
+Vi använder Docker för att köra hela vår applikation (frontend, backend och databas) i isolerade containers.
+Det gör att alla i teamet får en identisk utvecklingsmiljö, oavsett dator, och att deployment till produktion blir enklare och förutsägbar.
 
+Projektet består av tre tjänster som körs i containers via Docker Compose:
+ * MongoDB - Databasen för våra dagboksinlägg
+ * Backend (Express + Node.js) - Hanterar API, autentisering och AI-funktionalitet
+ * Frontend (Next.js) -	Användargränssnittet för dagboken
+
+Alla tjänster är kopplade via ett gemensamt bridge-nätverk (app-network).      
+
+* Backend - Bygga och köra vår Express-app i produktionsläge.
+* Frontend - Bygga och köra vår Next.js-app i produktionsläge.
+
+Healthcheck säkerställer att containern svarar korrekt.
 
 ### Tester
 
