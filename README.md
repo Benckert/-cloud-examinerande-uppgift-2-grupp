@@ -1,65 +1,163 @@
-# Journal App - Student Assignment Starter
+# Dagboken - Journal App
 
-A minimalist journaling application built with Next.js 14, TypeScript, Tailwind CSS, and Supabase. This project serves as a starting point for students to practice debugging, adding features, and improving existing code.
-
+En minimalistisk dagboksapplikation byggd med Next.js, Express, MongoDB och Docker. Applikationen låter användare skapa, redigera och ta bort dagboksinlägg med humörsanalys via AI.
 
 ## Tech Stack
 
-- **Frontend Framework:** Next.js 16 (App Router)
+### Frontend
+- **Framework:** Next.js 16 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Backend/Database:** Supabase (Authentication + PostgreSQL)
+- **UI Components:** React 19
+- **Testing:** Jest + React Testing Library
+
+### Backend
+- **Framework:** Express 5
+- **Language:** TypeScript
+- **Database:** MongoDB 6 with Mongoose
+- **Authentication:** JWT (JSON Web Tokens)
+- **Validation:** Zod
+- **AI Integration:** Google Gemini API
+- **Testing:** Jest
+
+### DevOps
+- **Containerization:** Docker & Docker Compose
+- **CI/CD:** GitHub Actions
+- **Deployment:** Render
+- **Image Registry:** Docker Hub
 
 ## Getting Started
+
+### Prerequisites
+
+- Docker Desktop installed
+- Node.js 22+ (for local development without Docker)
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd dagboks-appen
+git clone https://github.com/Benckert/-cloud-examinerande-uppgift-2-grupp.git
 ```
 
-### 2. Install Dependencies
+### 2. Environment Variables
+
+Copy the `.env.example` file to `.env` and fill in your values:
 
 ```bash
-npm install
+cp .env.example .env
 ```
 
-### 3. Set Up Supabase
-
-1. Skapa nytt projekt på supabase
-2. Kör allt som finns i `supabase/schema.sql` i SQL-editorn
-3. Hitta API-nycklar på Supabase och ersätt i .env.example
+Then update the values in `.env`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-project-url-here
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+# Backend
+NODE_ENV=development
+JWT_SECRET=your-secret-key
+MONGODB_URI=mongodb://mongo:27017/dagboken
+GEMINI_API_KEY=your-gemini-api-key
+
+# Frontend
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000
+```
+
+### 3. Run with Docker
+
+```bash
+docker-compose up
+```
+
+The application will be available at:
+- **Frontend:** http://localhost:3001
+- **Backend API:** http://localhost:3000
+- **MongoDB:** localhost:27017
+
+### 4. Run Locally (without Docker)
+
+#### Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+#### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 ## Available Scripts
 
-- `npm run dev` - Start the development server
-- `npm run build` - Build the application for production
-- `npm start` - Start the production server
-- `npm run lint` - Run ESLint to check code quality
+### Backend
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build TypeScript to JavaScript
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm test` - Run Jest tests
 
-## Design Philosophy
+### Frontend
+- `npm run dev` - Start Next.js development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm test` - Run Jest tests
 
-This app follows a minimalist, editorial design approach:
+## API Endpoints
 
-- **Typography:** Serif fonts for headings, sans-serif for body text
-- **Color Palette:** Cream backgrounds with dark brown text and warm gray accents
-- **Spacing:** Generous whitespace for readability
-- **Layout:** Clean, centered layouts with maximum content width
-- **Interaction:** Subtle hover states and transitions
+### Authentication
+- `POST /api/users/signup` - Register new user
+- `POST /api/users/login` - Login user
 
+### Entries
+- `GET /api/entries` - Get all entries for authenticated user
+- `POST /api/entries` - Create new entry
+- `PUT /api/entries/:id` - Update entry
+- `DELETE /api/entries/:id` - Delete entry
+
+### AI
+- `POST /api/ai/analyze` - Analyze entry with AI
+
+## Project Structure
+
+```
+├── backend/
+│   ├── src/
+│   │   ├── controllers/     # Request handlers
+│   │   ├── middleware/      # Auth middleware
+│   │   ├── models/          # Mongoose schemas
+│   │   ├── routes/          # API routes
+│   │   ├── validation/      # Zod schemas
+│   │   └── tests/           # Jest tests
+│   └── Dockerfile
+├── frontend/
+│   ├── src/
+│   │   ├── app/            # Next.js pages
+│   │   ├── components/     # React components
+│   │   ├── lib/            # API clients & utilities
+│   │   └── tests/          # Jest tests
+│   └── Dockerfile
+└── docker-compose.yml
+```
+
+## Features
+
+- ✅ User authentication with JWT
+- ✅ Create, read, update, delete journal entries
+- ✅ Mood tracking for each entry
+- ✅ AI-powered analysis using Google Gemini
+- ✅ Responsive design
+- ✅ Containerized with Docker
+- ✅ Automated testing with Jest
+- ✅ CI/CD with GitHub Actions
 
 ## Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Supabase Documentation](https://supabase.com/docs)
+- [Express Documentation](https://expressjs.com/)
+- [MongoDB Documentation](https://www.mongodb.com/docs/)
+- [Docker Documentation](https://docs.docker.com/)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs)
 
 # Grupp 7 
 ## Andréa, Hanna, Kristoffer B, Sara
@@ -137,4 +235,4 @@ För backend används enbart Jest för att testa Express-controllers i isolering
 * Mobbprogrammering med Live Share
 
 ### AI
-* Vi använde AI som en lärare när vi behövde hjälp att komma igång och när vi inte förstod något. 
+* Vi använde AI som en lärare när vi behövde hjälp att komma igång och när vi inte förstod något.
