@@ -88,6 +88,13 @@ This app follows a minimalist, editorial design approach:
 
 ### Docker
 
+Vi har en container med tre images som arbetar tillsammans genom Docker Compose. Frontend kör vår Next.js-applikation, backend kör Express-servern med vårt API, och MongoDB tillhandahåller databasen som backend använder för att spara användare och inlägg.
+
+Våra Dockerfiler är uppbyggda i flera steg för att optimera både utveckling och produktion. Frontend-Dockerfilen börjar med att kopiera in package.json och installera alla dependencies. Sedan kopieras resten av koden och Next.js bygger en produktionsversion av applikationen. Till sist använder vi en minimal Node.js-image för att köra den färdiga appen, vilket håller nere storleken på containern. Vi kör även Next.js i standalone-läge som är optimerat för docker, även detta bidrar till en mindre image. Backend-Dockerfilen följer ett liknande mönster, den installerar dependencies och kopierar in all backend-kod.
+
+Docker Compose-filen fastställer hur allt körs tillsammans. Den definierar hur våra tre images ska startas, vilka portar som ska exponeras och hur de kan kommunicera med varandra genom ett gemensamt nätverk. Backend kan till exempel nå MongoDB via det interna nätverket istället för localhost, och miljövariabler som databas-URL:er injiceras automatiskt.
+
+Detta har varit användbart både vid lokal utveckling och även vid deployment av projektet till produktion, eftersom samma container kan köras både lokalt och på en server vid deplyoment.
 
 ### Tester
 
@@ -110,8 +117,9 @@ För backend används enbart Jest för att testa Express-controllers i isolering
 
 ### Github Actions
 * Vi använde GitHub Actions för att automatisera delar av vårt arbetsflöde.
-* Till exempel kördes linting och tester automatiskt vid varje pull request, så vi kunde upptäcka fel tidigt.
-* Det hjälpte oss hålla koden ren och säkerställa att inget bröt projektet innan merge.
+* Vid en pull-request körs lintning och testning av docker, detta förhindrar att en icke fungerande applikation mergas in till main
+* Vid push till main (merge efter godkänd pull-request) byggs docker images för front och backend som sedan pushas upp till Dockerhub, efter det hämtar Render hem de senaste imagesen med hjälp av en webhook och deployar automatiskt den senaste versionen.
+* Det hjälpte oss hålla koden ren och säkerställa att inget bröt projektet innan merge och deployment.
 
 ### Vad vi ändrade
 * Bröt ut backend till Express + MongoDB / Mongoose
